@@ -300,6 +300,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 query = `Film Dubbing Indonesia Full Movie`;
             } else if (currentMovieCategory === 'Korea') {
                 query = `Film Korea Full Movie Sub Indo`;
+            } else if (currentMovieCategory === 'Bollywood') {
+                query = `Film India Bollywood Full Movie Sub Indo`;
+            } else if (currentMovieCategory === 'Thailand') {
+                query = `Film Thailand Full Movie Sub Indo`;
+            } else if (currentMovieCategory === 'Kungfu') {
+                query = `Film Kungfu Sub Indo Full Movie`;
+            } else if (currentMovieCategory === 'Cartoon') {
+                query = `Film Kartun Barongsai Animasi Sub Indo Full Movie`;
+            } else if (currentMovieCategory === 'Donghua') {
+                query = `Donghua Chinese Anime Sub Indo Full Movie`;
             } else if (currentMovieCategory === 'Drama China') {
                 query = `Drama China Full Movie Sub Indo`;
             } else if (currentMovieCategory === 'Film Pendek Cina') {
