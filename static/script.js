@@ -9,13 +9,114 @@ document.addEventListener('DOMContentLoaded', () => {
     const downloadMp4Btn = document.getElementById('downloadMp4Btn');
     const downloadMp3Btn = document.getElementById('downloadMp3Btn');
     const downloadStatus = document.getElementById('downloadStatus');
+    const homeBtn = document.getElementById('homeBtn');
+    const historyBtn = document.getElementById('historyBtn');
+    const downloadsBtn = document.getElementById('downloadsBtn');
+    const playlistsBtn = document.getElementById('playlistsBtn');
+    const karaokeNavBtn = document.getElementById('karaokeNavBtn');
+    const moviesBtn = document.getElementById('moviesBtn');
     
     let currentVideoId = null;
-
-
+    let currentVideoObj = null;
 
     let currentQuery = '';
     let isLoading = false;
+    let isKaraokeSearch = false; 
+    let isMovieSearch = false; // Movie mode state
+    let currentMovieCategory = 'All';
+
+    // Navigation
+    function setActiveNav(btn) {
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        if(btn) btn.classList.add('active');
+        
+        // Hide sidebar by default, show only if movies
+        const sidebar = document.getElementById('sidebar');
+        if (btn === moviesBtn) {
+            sidebar.classList.remove('hidden');
+        } else {
+            sidebar.classList.add('hidden');
+        }
+    }
+
+    homeBtn.addEventListener('click', () => {
+        setActiveNav(homeBtn);
+        isKaraokeSearch = false;
+        isMovieSearch = false;
+        resultsGrid.innerHTML = '<div class="placeholder-message">Memuat rekomendasi...</div>';
+        searchInput.value = '';
+        currentQuery = '';
+        loadRecommendations();
+    });
+
+    karaokeNavBtn.addEventListener('click', () => {
+        setActiveNav(karaokeNavBtn);
+        isKaraokeSearch = true;
+        isMovieSearch = false;
+        searchInput.value = '';
+        resultsGrid.innerHTML = '<div class="placeholder-message">Memuat lagu Karaoke...</div>';
+        performSearch('Lagu Karaoke Populer Indonesia');
+    });
+
+    moviesBtn.addEventListener('click', () => {
+        setActiveNav(moviesBtn);
+        isKaraokeSearch = false;
+        isMovieSearch = true;
+        currentMovieCategory = 'All';
+        searchInput.value = '';
+        resultsGrid.innerHTML = '<div class="placeholder-message">Memuat Film Indonesia...</div>';
+        // Reset category active state
+        document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('.category-btn[data-genre="All"]').classList.add('active');
+        
+        performSearch('Film Indonesia Full Movie');
+    });
+
+    historyBtn.addEventListener('click', () => {
+        setActiveNav(historyBtn);
+        isKaraokeSearch = false;
+        isMovieSearch = false;
+        loadHistory();
+    });
+
+    downloadsBtn.addEventListener('click', () => {
+        setActiveNav(downloadsBtn);
+        loadDownloads();
+    });
+    
+    playlistsBtn.addEventListener('click', () => {
+        setActiveNav(playlistsBtn);
+        loadPlaylists();
+    });
+
+    // Sidebar Categories
+    document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentMovieCategory = btn.dataset.genre;
+            
+            // Translate genre to Indonesian for search query if needed, or keep English genre + "Bahasa Indonesia"
+            let queryGenre = currentMovieCategory;
+            if (currentMovieCategory === 'All') queryGenre = '';
+            
+            const query = `Film ${queryGenre} Full Movie Bahasa Indonesia Sub Indo`;
+            performSearch(query);
+        });
+    });
+
+    // Search
+    searchBtn.addEventListener('click', () => {
+        const query = searchInput.value.trim();
+        if (query) performSearch(query);
+    });
+
+    searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const query = searchInput.value.trim();
+            if (query) performSearch(query);
+        }
+    });
 
     function renderVideos(videos, append = false) {
         if (!append) {
@@ -23,11 +124,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (videos.length === 0 && !append) {
-            resultsGrid.innerHTML = '<div class="placeholder-message">No videos found.</div>';
+            resultsGrid.innerHTML = '<div class="placeholder-message">Tidak ada video ditemukan.</div>';
             return;
         }
 
         videos.forEach(video => {
+            // MOVIE FILTER: Skip if < 60 mins (only if isMovieSearch is true)
+            if (isMovieSearch) {
+                const duration = video.duration || '';
+                const parts = duration.split(':');
+                
+                if (parts.length === 3) {
+                    // H:M:S -> OK
+                } else if (parts.length === 2) {
+                    // MM:SS -> Skip
+                    return; 
+                } else {
+                    return;
+                }
+            }
+
             const card = document.createElement('div');
             card.className = 'video-card';
             card.onclick = () => openVideo(video); 
@@ -67,24 +183,41 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!query) return;
 
         currentQuery = query;
+
+        // If Karaoke tab is active, append "lyrics" if not present
+        if (isKaraokeSearch) {
+             const lower = query.toLowerCase();
+             if (!lower.includes('lyrics') && !lower.includes('karaoke')) {
+                 currentQuery += ' lyrics';
+             }
+        }
+        
         isLoading = true;
         
         // Disable lazy loading call until new search is done
         window.removeEventListener('scroll', handleScroll);
         
-        resultsGrid.innerHTML = '<div class="placeholder-message">Searching...</div>';
+        if (!queryOverride) { 
+             resultsGrid.innerHTML = '<div class="placeholder-message">Sedang mencari...</div>';
+        }
+        // If queryOverride (like category click), we handle loading msg in click handler or stick with prev
+        // Actually best to show loading
+        // But performSearch is generally cleared.
+        
+        if (isMovieSearch && queryOverride && !queryOverride.includes('Movie')) {
+            // manual search in movies tab? allow
+        }
 
-        fetch(`/api/search?q=${encodeURIComponent(query)}`)
+        fetch(`/api/search?q=${encodeURIComponent(currentQuery)}`)
             .then(response => response.json())
             .then(data => {
                 renderVideos(data);
                 isLoading = false;
-                // Re-enable lazy loading
                 window.addEventListener('scroll', handleScroll);
             })
             .catch(err => {
                 console.error('Error:', err);
-                resultsGrid.innerHTML = '<div class="placeholder-message">Error fetching results.</div>';
+                resultsGrid.innerHTML = '<div class="placeholder-message">Gagal memuat hasil.</div>';
                 isLoading = false;
             });
     }
@@ -93,10 +226,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isLoading || !currentQuery) return;
         isLoading = true;
         
-        // Add loading indicator? or just load seamlessly
         const loadingDiv = document.createElement('div');
         loadingDiv.className = 'loading-more';
-        loadingDiv.textContent = 'Loading more...';
+        loadingDiv.textContent = 'Memuat lagi...';
         loadingDiv.style.textAlign = 'center';
         loadingDiv.style.padding = '20px';
         loadingDiv.style.color = '#aaa';
@@ -105,7 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch(`/api/search?q=${encodeURIComponent(currentQuery)}&next=true`)
             .then(response => response.json())
             .then(data => {
-                resultsGrid.removeChild(loadingDiv);
+                if (resultsGrid.contains(loadingDiv)) resultsGrid.removeChild(loadingDiv);
                 if (data.length > 0) {
                     renderVideos(data, true);
                 }
@@ -237,6 +369,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Save to history
         addToHistory(video);
         
+        // If in Karaoke Mode (Tab), open native player directly!
+        if (isKaraokeSearch) {
+            startKaraokeMode();
+            return;
+        }
+        
         // Close native PiP video if active
         // But pipVideoElement is in other scope...
         // Let's rely on PiP closing being manual or browser behavior (user can keep it open!)
@@ -247,7 +385,8 @@ document.addEventListener('DOMContentLoaded', () => {
         void modal.offsetWidth;
         modal.classList.add('active');
         
-        videoPlayer.src = `https://www.youtube.com/embed/${video.id}?autoplay=1`;
+        // Use youtube-nocookie.com which sometimes bypasses strict embed restrictions
+        videoPlayer.src = `https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1`;
         modalTitle.textContent = video.title;
         downloadStatus.textContent = ''; // Reset status
     }
@@ -324,7 +463,7 @@ document.addEventListener('DOMContentLoaded', () => {
     historyBtn.addEventListener('click', loadHistory);
     document.getElementById('downloadsBtn').addEventListener('click', loadDownloads);
     // Playlist Logic
-    const playlistsBtn = document.getElementById('playlistsBtn');
+    // const playlistsBtn = document.getElementById('playlistsBtn'); // Duplicate declaration
     const addToPlaylistBtn = document.getElementById('addToPlaylistBtn');
     const createPlaylistModal = document.getElementById('createPlaylistModal');
     const addToPlaylistModal = document.getElementById('addToPlaylistModal');
@@ -494,7 +633,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // We need to update openVideo to save the full video object globally
-    let currentVideoObj = null; 
+    // let currentVideoObj = null; // Duplicate declaration 
 
     // Event Listeners for Playlist
     playlistsBtn.addEventListener('click', () => loadPlaylists(false));
@@ -630,6 +769,225 @@ document.addEventListener('DOMContentLoaded', () => {
     // Wait, I am appending this code or replacing? 
     // I am replacing the "Floating Player Logic" block.
 
-    // Let's remove the old floating player HTML interaction.
+    // Karaoke Mode Logic
+    const karaokeBtn = document.getElementById('karaokeBtn');
+    const karaokeView = document.getElementById('karaokeView');
+    const lyricsContainer = document.getElementById('lyricsContainer');
+    const vocalRemoverToggle = document.getElementById('vocalRemoverToggle');
+    let karaokeVideoElement = null;
+    let audioContext = null;
+    let audioSource = null;
+    let channelSplitter = null;
+    let channelMerger = null;
+    let gainNode = null;
+    let lyricsData = [];
+    
+    window.closeKaraokeMode = function() {
+        if (karaokeVideoElement) {
+            karaokeVideoElement.pause();
+            karaokeVideoElement.src = '';
+            // Remove from DOM to be clean
+            if (karaokeVideoElement.parentNode) {
+                karaokeVideoElement.parentNode.removeChild(karaokeVideoElement);
+            }
+            karaokeVideoElement = null;
+        }
+        if (audioContext) {
+            audioContext.close();
+            audioContext = null;
+        }
+        karaokeView.style.display = 'none';
+        
+        // If we came from Home (Modal), show Modal again.
+        // If we came from Karaoke Tab (Direct), we might want to just close everything or show modal?
+        // Let's show the standard modal as "fallback" or just close if user wants to stop.
+        // Standard behavior: show modal (paused).
+        modal.style.display = 'block';
+        modal.classList.add('active');
+        // Reload standard player to be ready
+        videoPlayer.src = `https://www.youtube-nocookie.com/embed/${currentVideoId}?autoplay=0`;
+    };
+
+    async function startKaraokeMode() {
+        if (!currentVideoId) return;
+        
+        // Hide standard modal content, show Karaoke View
+        modal.classList.add('active'); // Ensure modal container is open
+        modal.style.display = 'block';
+        
+        // Hide only the "Standard" parts of the modal? 
+        // actually karaokeView is INSIDE modal-content? No, it's sibling in HTML structure usually or absolute.
+        // valid HTML check:
+        // <div id="videoModal" class="modal">
+        //    <div class="modal-content"> ... </div>
+        //    <div id="karaokeView" ...> ... </div>
+        // </div>
+        // So we need to hide .modal-content and show #karaokeView
+        document.querySelector('.modal-content').style.display = 'none';
+        karaokeView.style.display = 'flex';
+        
+        lyricsContainer.innerHTML = '<div class="placeholder-message">Loading...</div>';
+        
+        // Stop main player iframe
+        videoPlayer.src = '';
+        
+        try {
+            // 1. Fetch Stream
+            const response = await fetch(`/api/stream?id=${currentVideoId}`);
+            const data = await response.json();
+            
+            if (data.error) throw new Error(data.error);
+
+            // 2. Setup Native Video
+            karaokeVideoElement = document.createElement('video');
+            karaokeVideoElement.src = data.url;
+            karaokeVideoElement.style.width = '100%';
+            karaokeVideoElement.style.maxHeight = '40vh'; // Limit height to leave room for lyrics
+            karaokeVideoElement.controls = true;
+            karaokeVideoElement.style.display = 'block';
+            karaokeVideoElement.style.margin = '0 auto';
+            karaokeVideoElement.crossOrigin = 'anonymous'; // Try anonymous for Web Audio
+
+            // Insert video
+            // Clear previous video if any
+            const existing = karaokeView.querySelector('video');
+            if (existing) existing.remove();
+            
+            karaokeView.insertBefore(karaokeVideoElement, lyricsContainer);
+            
+            await karaokeVideoElement.play();
+            
+            // 3. Setup Audio Logic
+            setupAudioProcessing(karaokeVideoElement);
+            vocalRemoverToggle.checked = false; 
+            
+            // 4. Fetch Lyrics
+            fetchLyrics(currentVideoId);
+            
+            // 5. Sync Loop
+            karaokeVideoElement.addEventListener('timeupdate', syncLyrics);
+
+        } catch (err) {
+            console.error(err);
+            lyricsContainer.innerHTML = `<div class="placeholder-message">Error: ${err.message}. <br> Try reloading or use Popup Player.</div>`;
+        }
+    }
+
+    karaokeBtn.addEventListener('click', startKaraokeMode);
+
+    function setupAudioProcessing(videoEl) {
+        // ... (existing logic) ...
+        // We re-paste it or reference if not replaced.
+        // Wait, replace target includes setupAudioProcessing function definition start.
+        // So I need to include it or cut before it.
+        // The original code has setupAudioProcessing right after the listener.
+        // I'll keep the logic here.
+        
+        // If no crossOrigin ...
+        if (!videoEl.crossOrigin) {
+           // check if actually tainted?
+           // If we set crossOrigin='anonymous', we hope it works.
+        }
+
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            try {
+                audioSource = audioContext.createMediaElementSource(videoEl);
+            } catch (mediaElemErr) {
+                console.warn("Karaoke: " + mediaElemErr);
+                vocalRemoverToggle.disabled = true;
+                return;
+            }
+            
+            channelSplitter = audioContext.createChannelSplitter(2);
+            channelMerger = audioContext.createChannelMerger(2);
+            gainNode = audioContext.createGain(); 
+            audioSource.connect(audioContext.destination);
+            
+            vocalRemoverToggle.disabled = false;
+            vocalRemoverToggle.onchange = () => {
+                audioSource.disconnect();
+                channelSplitter.disconnect();
+                if (vocalRemoverToggle.checked) {
+                    audioSource.connect(channelSplitter);
+                    const inverter = audioContext.createGain();
+                    inverter.gain.value = -1;
+                    channelSplitter.connect(channelMerger, 0, 0); 
+                    channelSplitter.connect(channelMerger, 0, 1); 
+                    channelSplitter.connect(inverter, 1);
+                    inverter.connect(channelMerger, 0, 0);
+                    inverter.connect(channelMerger, 0, 1);
+                    channelMerger.connect(audioContext.destination);
+                } else {
+                    audioSource.connect(audioContext.destination);
+                }
+            };
+        } catch (e) {
+            console.warn("Web Audio API error:", e);
+        }
+    }
+
+    async function fetchLyrics(id) {
+
+        lyricsContainer.innerHTML = '<div class="placeholder-message">Loading lyrics...</div>';
+        try {
+            const res = await fetch(`/api/lyrics?id=${id}`);
+            const data = await res.json();
+            
+            if (data.error) {
+                lyricsContainer.innerHTML = '<div class="placeholder-message">No lyrics found for this video.</div>';
+                return;
+            }
+            
+            renderLyrics(data);
+        } catch (e) {
+            lyricsContainer.innerHTML = '<div class="placeholder-message">Failed to load lyrics.</div>';
+        }
+    }
+
+    function renderLyrics(data) {
+        lyricsData = data; // store global
+        lyricsContainer.innerHTML = '';
+        data.forEach((line, index) => {
+            const el = document.createElement('div');
+            el.className = 'lyric-line';
+            el.dataset.index = index;
+            el.dataset.start = line.start;
+            el.dataset.duration = line.duration;
+            el.textContent = line.text;
+            
+            // Click to seek
+            el.onclick = () => {
+                if (karaokeVideoElement) karaokeVideoElement.currentTime = line.start;
+            };
+            
+            lyricsContainer.appendChild(el);
+        });
+    }
+
+    function syncLyrics() {
+        if (!karaokeVideoElement || !lyricsData.length) return;
+        
+        const time = karaokeVideoElement.currentTime;
+        
+        // Find active line
+        const activeIdx = lyricsData.findIndex((line, i) => {
+            const next = lyricsData[i+1];
+            if (next) return time >= line.start && time < next.start;
+            return time >= line.start;
+        });
+        
+        if (activeIdx !== -1) {
+            // Highlight
+            const currentActive = lyricsContainer.querySelector('.active');
+            if (currentActive) currentActive.classList.remove('active');
+            
+            const newActive = lyricsContainer.children[activeIdx];
+            if (newActive) {
+                newActive.classList.add('active');
+                newActive.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    }
 
 });

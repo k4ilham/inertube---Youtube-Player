@@ -15,27 +15,45 @@
         <header>
             <div class="logo">YouTube Viewer</div>
             <div class="nav-actions">
-                <button id="homeBtn" class="nav-btn">Home</button>
-                <button id="historyBtn" class="nav-btn">History</button>
-                <button id="downloadsBtn" class="nav-btn">Downloads</button>
-                <button id="playlistsBtn" class="nav-btn">Playlists</button>
+                <button id="homeBtn" class="nav-btn active">Beranda</button>
+                <button id="karaokeNavBtn" class="nav-btn">🎤 Karaoke</button>
+                <button id="moviesBtn" class="nav-btn">🎬 Film</button>
+                <button id="historyBtn" class="nav-btn">Riwayat</button>
+                <button id="downloadsBtn" class="nav-btn">Unduhan</button>
+                <button id="playlistsBtn" class="nav-btn">Playlist</button>
             </div>
             <div class="search-bar">
-                <input type="text" id="searchInput" placeholder="Search for videos...">
+                <input type="text" id="searchInput" placeholder="Cari video...">
                 <button id="searchBtn">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                 </button>
             </div>
         </header>
         
-        <main>
-            <div id="resultsGrid" class="results-grid">
-                <!-- Results will be populated here -->
-                <div class="placeholder-message">
-                    Search for something to start watching.
+        <div class="app-content-wrapper">
+            <aside id="sidebar" class="sidebar hidden">
+                <h3>Genre</h3>
+                <button class="category-btn active" data-genre="All">Semua Film</button>
+                <button class="category-btn" data-genre="Action">Aksi</button>
+                <button class="category-btn" data-genre="Adventure">Petualangan</button>
+                <button class="category-btn" data-genre="Comedy">Komedi</button>
+                <button class="category-btn" data-genre="Drama">Drama</button>
+                <button class="category-btn" data-genre="Horror">Horror</button>
+                <button class="category-btn" data-genre="Sci-Fi">Fiksi Ilmiah</button>
+                <button class="category-btn" data-genre="Thriller">Thriller</button>
+                <button class="category-btn" data-genre="Documentary">Dokumenter</button>
+                <button class="category-btn" data-genre="Animation">Animasi</button>
+            </aside>
+
+            <main>
+                <div id="resultsGrid" class="results-grid">
+                    <!-- Results will be populated here -->
+                    <div class="placeholder-message">
+                        Cari sesuatu untuk mulai menonton.
+                    </div>
                 </div>
-            </div>
-        </main>
+            </main>
+        </div>
 
         <div id="videoModal" class="modal">
             <div class="modal-content">
@@ -50,8 +68,24 @@
                         <button id="downloadMp3Btn" class="download-btn">Download MP3</button>
                         <button id="addToPlaylistBtn" class="download-btn secondary">Add to Playlist</button>
                         <button id="popupPlayerBtn" class="download-btn secondary">Popup Player</button>
+                        <button id="karaokeBtn" class="download-btn secondary" style="background: linear-gradient(45deg, #ff00cc, #333399);">🎤 Karaoke</button>
                         <div id="downloadStatus" class="download-status"></div>
                     </div>
+                </div>
+            </div>
+             <!-- Karaoke View -->
+             <div id="karaokeView" class="karaoke-view" style="display: none;">
+                <div class="karaoke-controls">
+                    <button class="close-karaoke" onclick="closeKaraokeMode()">&times; Close</button>
+                    <h3>Karaoke Mode</h3>
+                    <label class="switch">
+                        <input type="checkbox" id="vocalRemoverToggle">
+                        <span class="slider round"></span>
+                    </label>
+                    <span style="font-size: 0.9rem; margin-left: 10px;">Remove Vocals (Beta)</span>
+                </div>
+                <div id="lyricsContainer" class="lyrics-container">
+                    <div class="placeholder-message">Loading Lyrics...</div>
                 </div>
             </div>
         </div>

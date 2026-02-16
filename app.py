@@ -184,6 +184,40 @@ def save_playlists_data(data):
     with open(PLAYLISTS_FILE, 'w') as f:
         json.dump(data, f, indent=2)
 
+@app.route('/api/lyrics')
+def lyrics():
+    video_id = request.args.get('id')
+    if not video_id:
+        return jsonify({'error': 'No video ID provided'}), 400
+    
+    try:
+        from youtube_transcript_api import YouTubeTranscriptApi
+        # Fetch transcript
+        # We try to get 'en' or auto-generated
+        transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+        
+        # Try to find english or manually created first
+        try:
+            transcript = transcript_list.find_manually_created_transcript(['en', 'id'])
+        except:
+            try:
+                # Fallback to generated
+                transcript = transcript_list.find_generated_transcript(['en', 'id'])
+            except:
+                 # Fallback to ANY
+                 transcript = transcript_list[0]
+        
+        return jsonify(transcript.fetch())
+    except Exception as e:
+        # print(f"Lyrics error: {e}") # Debug
+        try:
+             # Last resort: just `get_transcript` which picks first available
+             from youtube_transcript_api import YouTubeTranscriptApi
+             t = YouTubeTranscriptApi.get_transcript(video_id)
+             return jsonify(t)
+        except Exception as e2:
+             return jsonify({'error': 'No lyrics found.'}), 404
+
 @app.route('/api/playlists', methods=['GET', 'POST'])
 def playlists():
     if request.method == 'GET':
