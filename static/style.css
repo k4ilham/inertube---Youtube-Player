@@ -7,6 +7,25 @@
     --accent-hover: #cc0000;
     --border-radius: 12px;
     --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    --header-bg: rgba(15, 15, 15, 0.95);
+    --sidebar-bg: #151515;
+    --border-color: #333;
+    --input-bg: #222;
+    --hover-bg: rgba(255, 255, 255, 0.1);
+}
+
+body.light-mode {
+    --bg-color: #f9f9f9;
+    --card-bg: #ffffff;
+    --text-primary: #0f0f0f;
+    --text-secondary: #606060;
+    --accent: #ff0000;
+    --accent-hover: #cc0000;
+    --header-bg: rgba(255, 255, 255, 0.95);
+    --sidebar-bg: #f0f0f0;
+    --border-color: #e5e5e5;
+    --input-bg: #efefef;
+    --hover-bg: rgba(0, 0, 0, 0.05);
 }
 
 * {
@@ -31,15 +50,14 @@ body {
 }
 
 header {
-
-    padding: 20px 40px;
-    background-color: rgba(15, 15, 15, 0.95);
+    padding: 15px 40px;
+    background-color: var(--header-bg);
     backdrop-filter: blur(10px);
     display: flex;
     align-items: center;
     gap: 20px;
     justify-content: space-between;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid var(--border-color);
     z-index: 100;
     flex-shrink: 0;
 }
@@ -57,10 +75,15 @@ main {
     padding: 20px;
 }
 
+main.no-padding {
+    padding: 0;
+    overflow: hidden;
+}
+
 .sidebar {
     width: 200px;
-    background: #151515;
-    border-right: 1px solid #333;
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--border-color);
     padding: 20px;
     display: flex;
     flex-direction: column;
@@ -184,29 +207,54 @@ main {
     border-left: 3px solid #ff5252;
 }
 
-/* Music Categories */
+/* Music Categories (Spotify Style) */
 .category-music-btn {
     background: transparent;
     border: none;
-    color: #ccffff;
+    color: #b3b3b3;
     text-align: left;
     padding: 10px;
     cursor: pointer;
     border-radius: 6px;
     transition: all 0.2s;
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 500;
 }
 
 .category-music-btn:hover {
-    background: #1a3a4a;
-    color: white;
+    background: #282828;
+    color: #fff;
 }
 
 .category-music-btn.active {
-    background: #224455;
-    color: white;
-    border-left: 3px solid #00bcd4;
+    background: #282828;
+    color: #1DB954;
+    border-left: 3px solid #1DB954;
+}
+
+/* Game Categories (Neon Purple Style) */
+.category-game-btn {
+    background: transparent;
+    border: none;
+    color: #b3b3b3;
+    text-align: left;
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.category-game-btn:hover {
+    background: #1a1a2e;
+    color: #fff;
+}
+
+.category-game-btn.active {
+    background: #1a1a2e;
+    color: #8a2be2;
+    border-left: 3px solid #8a2be2;
 }
 
 /* Kailham Categories */
@@ -268,11 +316,11 @@ main {
 
 .search-bar {
     display: flex;
-    background: #222;
+    background: var(--input-bg);
     border-radius: 24px;
     padding: 5px 15px;
     width: 40%;
-    border: 1px solid #333;
+    border: 1px solid var(--border-color);
     transition: var(--transition);
 }
 
@@ -312,12 +360,12 @@ main {
 
 .nav-btn:hover {
     color: var(--text-primary);
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--hover-bg);
 }
 
 .nav-btn.active {
     color: var(--text-primary);
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--hover-bg);
 }
 
 

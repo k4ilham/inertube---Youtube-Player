@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Space Shooter</title>
+    <style>
+        body {
+            background: #000;
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #00f2ff;
+            font-size: 20px;
+            z-index: 10;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="ui">Enemies Destroyed: <span id="score">0</span></div>
+    <canvas id="game"></canvas>
+
+    <script>
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('score');
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            player.y = canvas.height - 80;
+            player.x = canvas.width / 2 - player.w / 2;
+        }
+
+        const spaceshipImg = new Image();
+        spaceshipImg.src = '/static/games/assets/dino_hero.png';
+        const alienImg = new Image();
+        alienImg.src = '/static/games/assets/alien_ship.png';
+
+        function playSound(freq, type = 'sine', duration = 0.1) {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) { }
+        }
+
+        let score = 0;
+        let player = { x: 0, y: 0, w: 50, h: 50, color: '#00f2ff' };
+        let bullets = [];
+        let enemies = [];
+        let keys = {};
+        let gameActive = true;
+
+        resize();
+        window.addEventListener('resize', resize);
+
+        window.onkeydown = e => keys[e.code] = true;
+        window.onkeyup = e => keys[e.code] = false;
+
+        function spawnEnemy() {
+            if (Math.random() < 0.04) {
+                enemies.push({ x: Math.random() * (canvas.width - 50), y: -50, w: 50, h: 50, color: '#ff00cc' });
+            }
+        }
+
+        function update() {
+            if (!gameActive) return;
+
+            if (keys['ArrowLeft'] && player.x > 0) player.x -= 8;
+            if (keys['ArrowRight'] && player.x < canvas.width - player.w) player.x += 8;
+            if (keys['Space']) {
+                if (bullets.length < 10 && (!bullets.length || bullets[bullets.length - 1].y < player.y - 120)) {
+                    bullets.push({ x: player.x + player.w / 2 - 2, y: player.y - 10, w: 4, h: 25 });
+                    playSound(880, 'sine', 0.05);
+                }
+            }
+
+            bullets.forEach((b, i) => {
+                b.y -= 10;
+                if (b.y < -30) bullets.splice(i, 1);
+            });
+
+            enemies.forEach((en, ei) => {
+                en.y += 3;
+                if (en.y > canvas.height) {
+                    gameActive = false;
+                    playSound(150, 'sawtooth', 0.5);
+                    alert('Game Over! Space Invaded!');
+                    location.reload();
+                }
+
+                bullets.forEach((b, bi) => {
+                    if (b.x < en.x + en.w && b.x + b.w > en.x && b.y < en.y + en.h && b.y + b.h > en.y) {
+                        enemies.splice(ei, 1);
+                        bullets.splice(bi, 1);
+                        score++;
+                        scoreEl.innerText = score;
+                        playSound(330, 'sawtooth', 0.1);
+                    }
+                });
+            });
+
+            spawnEnemy();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Stars
+            ctx.fillStyle = '#fff';
+            for (let i = 0; i < 20; i++) ctx.fillRect(Math.random() * canvas.width, Math.random() * canvas.height, 1, 1);
+
+            // Player
+            if (spaceshipImg.complete) {
+                ctx.drawImage(spaceshipImg, player.x, player.y, player.w, player.h);
+            } else {
+                ctx.fillStyle = player.color;
+                ctx.fillRect(player.x, player.y, player.w, player.h);
+            }
+
+            // Lasers
+            ctx.fillStyle = '#00f2ff';
+            bullets.forEach(b => {
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#00f2ff';
+                ctx.fillRect(b.x, b.y, b.w, b.h);
+                ctx.shadowBlur = 0;
+            });
+
+            // Enemies
+            enemies.forEach(en => {
+                if (alienImg.complete) {
+                    ctx.drawImage(alienImg, en.x, en.y, en.w, en.h);
+                } else {
+                    ctx.fillStyle = en.color;
+                    ctx.fillRect(en.x, en.y, en.w, en.h);
+                }
+            });
+
+            update();
+            requestAnimationFrame(draw);
+        }
+
+        draw();
+    </script>
+</body>
+
+</html>

@@ -5,6 +5,7 @@ import sys
 import threading
 import os
 import json
+from urllib.parse import quote
 
 app = Flask(__name__)
 
@@ -125,7 +126,9 @@ def stream():
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
-            return jsonify({'url': info['url'], 'title': info.get('title')})
+            direct_url = info['url']
+            proxied_url = f'/api/proxy?url={quote(direct_url)}'
+            return jsonify({'url': proxied_url, 'title': info.get('title')})
     except Exception as e:
         print(f"Stream error: {e}")
         return jsonify({'error': str(e)}), 500
@@ -187,7 +190,11 @@ def history():
             
         history_data = load_history_data()
         
-        # Remove existing entry if present (to bump to top)
+        # Remove existing entry if present (to bump to top) but preserve lastPosition
+        existing_video = next((v for v in history_data if v['id'] == video['id']), None)
+        if existing_video and 'lastPosition' in existing_video:
+            video['lastPosition'] = existing_video['lastPosition']
+            
         history_data = [v for v in history_data if v['id'] != video['id']]
         
         # Add timestamp
@@ -202,6 +209,28 @@ def history():
         
         save_history_data(history_data)
         return jsonify({'status': 'success'})
+
+@app.route('/api/history/progress', methods=['POST'])
+def save_progress():
+    data = request.json
+    video_id = data.get('id')
+    progress = data.get('progress')
+    
+    if not video_id or progress is None:
+        return jsonify({'error': 'Missing data'}), 400
+        
+    history_data = load_history_data()
+    found = False
+    for video in history_data:
+        if video['id'] == video_id:
+            video['lastPosition'] = progress
+            found = True
+            break
+            
+    if found:
+        save_history_data(history_data)
+        
+    return jsonify({'status': 'success'})
 
 PLAYLISTS_FILE = 'playlists.json'
 

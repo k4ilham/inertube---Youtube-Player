@@ -1,20 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>InerTube</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <!-- PWA -->
-    
+
     <meta name="theme-color" content="#ff0000">
     <link rel="apple-touch-icon" href="/static/icon-192.png">
-    
+
     <!-- Google Fonts for premium look -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
+
 <body>
     <div class="app-container">
         <header>
@@ -23,20 +25,27 @@
                 <button id="homeBtn" class="nav-btn active">Beranda</button>
                 <button id="karaokeNavBtn" class="nav-btn">🎤 Karaoke</button>
                 <button id="moviesBtn" class="nav-btn">🎬 Film</button>
+                <button id="seriesBtn" class="nav-btn">📺 Series</button>
                 <button id="kidsBtn" class="nav-btn">👶 Anak</button>
                 <button id="musicBtn" class="nav-btn">🎵 Musik</button>
+                <button id="gamesBtn" class="nav-btn">🎮 Game</button>
                 <button id="historyBtn" class="nav-btn">Riwayat</button>
                 <button id="downloadsBtn" class="nav-btn">Unduhan</button>
                 <button id="playlistsBtn" class="nav-btn">Playlist</button>
+                <button id="themeToggle" class="nav-btn" title="Ganti Tema">🌓 Tema</button>
             </div>
             <div class="search-bar">
                 <input type="text" id="searchInput" placeholder="Cari video...">
                 <button id="searchBtn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
                 </button>
             </div>
         </header>
-        
+
         <div class="app-content-wrapper">
             <!-- Sidebar Home -->
             <aside id="sidebar-home" class="sidebar hidden" style="background: #181818;">
@@ -51,7 +60,8 @@
             </aside>
 
             <!-- Sidebar Karaoke -->
-            <aside id="sidebar-karaoke" class="sidebar hidden" style="background: #1e1020; border-right-color: #d63384;">
+            <aside id="sidebar-karaoke" class="sidebar hidden"
+                style="background: #1e1020; border-right-color: #d63384;">
                 <h3 style="color: #d63384;">Genre Karaoke</h3>
                 <button class="category-karaoke-btn active" data-query="Lagu Karaoke Populer">Populer</button>
                 <button class="category-karaoke-btn" data-query="Karaoke Pop Indonesia">Pop Indo</button>
@@ -74,34 +84,98 @@
                 <button class="category-movie-btn" data-genre="Sci-Fi">Fiksi Ilmiah</button>
                 <button class="category-movie-btn" data-genre="Thriller">Thriller</button>
                 <button class="category-movie-btn" data-genre="Documentary">Dokumenter</button>
-                <button class="category-movie-btn" data-genre="Animation">Animasi</button>
+                <button class="category-movie-btn" data-genre="Dubbing Indonesia">Dub Indo</button>
+                <button class="category-movie-btn" data-genre="Korea">Film Korea</button>
+                <button class="category-movie-btn" data-genre="Drama China">Drama China</button>
+                <button class="category-movie-btn" data-genre="Film Pendek Cina">Film Pendek Cina</button>
+                <button class="category-movie-btn" data-genre="FTV">FTV</button>
+                <button class="category-movie-btn" data-genre="Sinetron">Sinetron</button>
+                <button class="category-movie-btn" data-genre="Film Bioskop">Film Bioskop</button>
+                <button class="category-movie-btn" data-genre="Film Pendek">Film Pendek</button>
+                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 10px 0;">
+                <h3 style="font-size: 0.8rem; opacity: 0.7;">Netflix Style</h3>
+                <button class="category-movie-btn" data-genre="Top 10">Top 10 Hari Ini</button>
+                <button class="category-movie-btn" data-genre="Netflix Originals">Baru & Populer</button>
+                <button class="category-movie-btn" data-genre="Anime">Anime</button>
+                <button class="category-movie-btn" data-genre="Romance">Romantis</button>
+                <button class="category-movie-btn" data-genre="Crime Thriller">Kriminal & Thriller</button>
+                <button class="category-movie-btn" data-genre="Reality Show">Reality Show</button>
             </aside>
-            
+
+            <!-- Sidebar Series -->
+            <aside id="sidebar-series" class="sidebar hidden" style="background: #101520; border-right-color: #4da6ff;">
+                <h3 style="color: #4da6ff;">Series & Anime</h3>
+                <button class="category-series-btn active" data-query="Captain Tsubasa Episode">Captain Tsubasa</button>
+                <button class="category-series-btn" data-query="One Piece Episode Sub Indo">One Piece</button>
+                <button class="category-series-btn" data-query="Naruto Shippuden Episode Sub Indo">Naruto</button>
+                <button class="category-series-btn" data-query="Sinetron Indonesia Terbaru Full Episode">Sinetron
+                    Indo</button>
+                <button class="category-series-btn" data-query="Drakor Terbaru Sub Indo Full Episode">Drama
+                    Korea</button>
+                <button class="category-series-btn" data-query="Anime Terbaru 2024">Anime Terbaru</button>
+                <button class="category-series-btn" data-query="Cartoon Network Indonesia">Kartun Populer</button>
+            </aside>
+
             <!-- Sidebar Kids -->
             <aside id="sidebar-kids" class="sidebar hidden" style="background: #2a1a1a; border-right-color: #ff5252;">
                 <h3 style="color: #ff5252;">Kategori Anak</h3>
-                <button class="category-kids-btn active" data-query="Kartun Anak">Kartun</button>
-                <button class="category-kids-btn" data-query="Lagu Anak">Lagu</button>
-                <button class="category-kids-btn" data-query="Belajar Anak">Belajar</button>
-                <button class="category-kids-btn" data-query="Dongeng Anak">Dongeng</button>
-                <button class="category-kids-btn" data-query="Gaming Anak">Gaming</button>
+                <button class="category-kids-btn active" data-query="Kartun Anak Dub Indo">Kartun</button>
+                <button class="category-kids-btn" data-query="Lagu Anak Indonesia">Lagu</button>
+                <button class="category-kids-btn" data-query="Belajar Anak Indonesia">Belajar</button>
+                <button class="category-kids-btn" data-query="Dongeng Anak Bahasa Indonesia">Dongeng</button>
+                <button class="category-kids-btn" data-query="Gaming Anak Indonesia">Gaming</button>
                 <button class="category-kids-btn" data-query="Hewan Lucu">Hewan</button>
             </aside>
 
             <!-- Sidebar Music -->
-            <aside id="sidebar-music" class="sidebar hidden" style="background: #101a20; border-right-color: #00bcd4;">
-                <h3 style="color: #00bcd4;">Musik Indonesia</h3>
-                <button class="category-music-btn active" data-query="Lagu Indonesia Terbaru">Terbaru</button>
-                <button class="category-music-btn" data-query="Lagu Pop Indonesia">Pop Indo</button>
-                <button class="category-music-btn" data-query="Lagu Dangdut Koplo">Dangdut</button>
-                <button class="category-music-btn" data-query="Lagu Rock Indonesia">Rock</button>
-                <button class="category-music-btn" data-query="Lagu Indie Indonesia">Indie</button>
-                <button class="category-music-btn" data-query="Lagu Galau Indonesia">Galau</button>
-                <button class="category-music-btn" data-query="Lagu Akustik Indonesia">Akustik</button>
-                <button class="category-music-btn" data-query="Tembang Kenangan Indonesia">Kenangan</button>
-                <button class="category-music-btn" data-query="Cover Lagu Indonesia">Cover</button>
+            <aside id="sidebar-music" class="sidebar hidden" style="background: #000000; border-right-color: #1DB954;">
+                <h3 style="color: #1DB954; font-size: 0.8rem;">Dibuat Untuk Kamu</h3>
+                <button class="category-music-btn active" data-query="Lagu Indonesia Populer 2024">Daily Mix 1</button>
+                <button class="category-music-btn" data-query="Lagu Hits Dunia Terbaru">Discover Weekly</button>
+
+                <h3 style="color: #1DB954; font-size: 0.8rem; margin-top: 20px;">Tangga Lagu</h3>
+                <button class="category-music-btn" data-query="Top 50 Indonesia Spotify">Top 50 Indonesia</button>
+                <button class="category-music-btn" data-query="Top 50 Global Spotify">Top 50 Global</button>
+                <button class="category-music-btn" data-query="Viral 50 Indonesia">Viral 50 Indonesia</button>
+
+                <h3 style="color: #1DB954; font-size: 0.8rem; margin-top: 20px;">Mood & Genre</h3>
+                <button class="category-music-btn" data-query="Lagu Santai Akustik">Santai</button>
+                <button class="category-music-btn" data-query="Lagu Olahraga Semangat">Olahraga</button>
+                <button class="category-music-btn" data-query="Lagu Fokus Belajar Kerjaan">Fokus</button>
+                <button class="category-music-btn" data-query="Lagu Pesta Party">Pesta</button>
+                <button class="category-music-btn" data-query="Lagu Tidur Sleep Relax">Tidur</button>
+
+                <h3 style="color: #1DB954; font-size: 0.8rem; margin-top: 20px;">Koleksi Kamu</h3>
+                <button class="category-music-btn" data-query="Lagu Favorite Baru">Lagu yang Disukai</button>
+                <button class="category-music-btn" data-query="Podcast Indonesia Populer">Podcast</button>
+                <button class="category-music-btn" data-query="Artis Indonesia Terpopuler">Artis</button>
             </aside>
 
+            <!-- Sidebar Games -->
+            <aside id="sidebar-games" class="sidebar hidden" style="background: #0b0b1a; border-right-color: #7f00ff;">
+                <h3 style="color: #7f00ff;">Playable Games</h3>
+                <button class="category-game-btn active" data-type="local" data-url="/static/games/snake.html">Snake
+                    Neon</button>
+                <button class="category-game-btn" data-type="local" data-url="/static/games/dino.html">Dino
+                    Jump</button>
+                <button class="category-game-btn" data-type="local" data-url="/static/games/space.html">Space
+                    Shooter</button>
+                <button class="category-game-btn" data-type="local" data-url="/static/games/flappy.html">Flappy
+                    Banana</button>
+                <button class="category-game-btn" data-type="local" data-url="/static/games/brick.html">Banana
+                    Brick</button>
+                <button class="category-game-btn" data-type="local" data-url="/static/games/snake.html">Retro Tank
+                    (Beta)</button>
+
+                <hr style="border: 0; border-top: 1px solid #333; margin: 15px 0;">
+                <h3 style="color: #7f00ff; font-size: 0.8rem;">Game Videos</h3>
+                <button class="category-game-btn" data-type="search" data-query="Python Pygame Game Projects">Pygame
+                    Projects</button>
+                <button class="category-game-btn" data-type="search"
+                    data-query="Gameplay Ludo King Online">Ludo</button>
+                <button class="category-game-btn" data-type="search" data-query="Mobile Legends Indonesia">Mobile
+                    Legends</button>
+                <button class="category-game-btn" data-type="search" data-query="Roblox Indonesia">Roblox</button>
             </aside>
 
             <main>
@@ -111,59 +185,37 @@
                         Cari sesuatu untuk mulai menonton.
                     </div>
                 </div>
+                <div id="gameArea" class="hidden"
+                    style="width: 100%; height: 100%; background: #000; display: flex; align-items: center; justify-content: center;">
+                    <iframe id="gameIframe" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+                </div>
             </main>
         </div>
 
-        <div id="videoModal" class="modal">
-            <div class="modal-content">
-                <span class="close-modal">&times;</span>
-                <div class="video-wrapper">
-                    <iframe id="videoPlayer" src="" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                </div>
-                <div class="video-info">
-                    <h2 id="modalTitle"></h2>
-                    <div class="download-actions">
-                        <button id="downloadMp4Btn" class="download-btn">Download MP4</button>
-                        <button id="downloadMp3Btn" class="download-btn">Download MP3</button>
-                        <button id="addToPlaylistBtn" class="download-btn secondary">Add to Playlist</button>
-                        <button id="popupPlayerBtn" class="download-btn secondary">Popup Player</button>
-                        <button id="karaokeBtn" class="download-btn secondary" style="background: linear-gradient(45deg, #ff00cc, #333399);">🎤 Karaoke</button>
-                        <div id="downloadStatus" class="download-status"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Floating Player -->
-        <div id="floatingPlayer" class="floating-player">
-            <div id="dragHandle" class="drag-handle">
-                <span style="font-size: 12px; font-weight: bold; margin-left: 10px;">Mini Player</span>
-                <span id="closeFloating" class="close-floating">&times;</span>
-            </div>
-            <div class="floating-video-container">
-                <iframe id="floatingVideoFrame" src="" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            </div>
-        </div>
+        <!-- Modals removed as players now open in new tabs -->
 
         <!-- Create Playlist Modal -->
         <div id="createPlaylistModal" class="modal">
             <div class="modal-content small-modal">
                 <span class="close-create-playlist">&times;</span>
                 <h2>Create New Playlist</h2>
-                <input type="text" id="newPlaylistName" placeholder="Playlist Name" class="modal-input" style="width: 100%; padding: 10px; margin: 10px 0; background: #333; border: 1px solid #444; color: white; border-radius: 5px;">
+                <input type="text" id="newPlaylistName" placeholder="Playlist Name" class="modal-input"
+                    style="width: 100%; padding: 10px; margin: 10px 0; background: #333; border: 1px solid #444; color: white; border-radius: 5px;">
                 <button id="confirmCreatePlaylistBtn" class="download-btn" style="width: 100%;">Create</button>
             </div>
         </div>
-    
+
         <!-- Add to Playlist Modal -->
         <div id="addToPlaylistModal" class="modal">
             <div class="modal-content small-modal">
                 <span class="close-add-playlist">&times;</span>
                 <h2>Add to Playlist</h2>
-                <div id="playlistList" class="playlist-list" style="max-height: 200px; overflow-y: auto; margin: 10px 0;">
+                <div id="playlistList" class="playlist-list"
+                    style="max-height: 200px; overflow-y: auto; margin: 10px 0;">
                     <!-- Playlists will be injected here -->
                 </div>
-                <button id="openCreatePlaylistBtn" class="download-btn secondary" style="width: 100%;">Create New Playlist</button>
+                <button id="openCreatePlaylistBtn" class="download-btn secondary" style="width: 100%;">Create New
+                    Playlist</button>
             </div>
         </div>
     </div>
@@ -173,4 +225,5 @@
     </footer>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
+
 </html>

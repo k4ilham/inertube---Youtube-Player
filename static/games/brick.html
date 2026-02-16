@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Banana Brick</title>
+    <style>
+        body {
+            background: #000;
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #4caf50;
+            font-size: 24px;
+            z-index: 10;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="ui">Score: <span id="score">0</span></div>
+    <canvas id="game"></canvas>
+
+    <script>
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('score');
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initBricks();
+        }
+
+        const ballImg = new Image();
+        ballImg.src = '/static/games/assets/banana_item.png';
+
+        function playSound(freq, type = 'sine', duration = 0.1) {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) { }
+        }
+
+        let score = 0;
+        let paddle = { w: 150, h: 15, x: 0 };
+        let ball = { x: 0, y: 0, dx: 5, dy: -5, radius: 10 };
+        let bricks = [];
+
+        function initBricks() {
+            bricks = [];
+            let rows = 5;
+            let cols = Math.floor(canvas.width / 100);
+            let offset = (canvas.width - (cols * 95)) / 2;
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    bricks.push({ x: offset + c * 95, y: r * 35 + 80, w: 85, h: 25, active: true });
+                }
+            }
+            ball.x = canvas.width / 2;
+            ball.y = canvas.height - 100;
+            paddle.x = canvas.width / 2 - paddle.w / 2;
+        }
+
+        resize();
+        window.addEventListener('resize', resize);
+
+        canvas.onmousemove = e => {
+            let rect = canvas.getBoundingClientRect();
+            paddle.x = e.clientX - rect.left - paddle.w / 2;
+            if (paddle.x < 0) paddle.x = 0;
+            if (paddle.x + paddle.w > canvas.width) paddle.x = canvas.width - paddle.w;
+        };
+
+        function update() {
+            ball.x += ball.dx;
+            ball.y += ball.dy;
+
+            if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
+                ball.dx *= -1;
+                playSound(300);
+            }
+            if (ball.y - ball.radius < 0) {
+                ball.dy *= -1;
+                playSound(300);
+            }
+
+            if (ball.y + ball.radius > canvas.height - 40) {
+                if (ball.x > paddle.x && ball.x < paddle.x + paddle.w) {
+                    ball.dy *= -1;
+                    playSound(400, 'triangle');
+                } else if (ball.y > canvas.height) {
+                    playSound(150, 'sawtooth', 0.5);
+                    alert('Game Over! Score: ' + score);
+                    location.reload();
+                }
+            }
+
+            bricks.forEach(b => {
+                if (b.active) {
+                    if (ball.x > b.x && ball.x < b.x + b.w && ball.y > b.y && ball.y < b.y + b.h) {
+                        b.active = false;
+                        ball.dy *= -1;
+                        score++;
+                        scoreEl.innerText = score;
+                        playSound(660);
+                    }
+                }
+            });
+
+            if (bricks.length > 0 && bricks.every(b => !b.active)) {
+                alert('You Win! Score: ' + score);
+                location.reload();
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Paddle
+            ctx.fillStyle = '#4caf50';
+            ctx.fillRect(paddle.x, canvas.height - 40, paddle.w, paddle.h);
+
+            // Ball
+            if (ballImg.complete) {
+                ctx.drawImage(ballImg, ball.x - ball.radius, ball.y - ball.radius, ball.radius * 2, ball.radius * 2);
+            } else {
+                ctx.fillStyle = '#ffeb3b';
+                ctx.beginPath();
+                ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Bricks
+            bricks.forEach(b => {
+                if (b.active) {
+                    ctx.fillStyle = '#ffeb3b';
+                    ctx.fillRect(b.x, b.y, b.w, b.h);
+                    ctx.strokeStyle = '#000';
+                    ctx.strokeRect(b.x, b.y, b.w, b.h);
+                }
+            });
+
+            update();
+            requestAnimationFrame(draw);
+        }
+
+        draw();
+    </script>
+</body>
+
+</html>

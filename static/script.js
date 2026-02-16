@@ -2,12 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('searchInput');
     const searchBtn = document.getElementById('searchBtn');
     const resultsGrid = document.getElementById('resultsGrid');
-    const modal = document.getElementById('videoModal');
-    const closeModal = document.querySelector('.close-modal');
-    const videoPlayer = document.getElementById('videoPlayer');
-    const modalTitle = document.getElementById('modalTitle');
-    const downloadMp4Btn = document.getElementById('downloadMp4Btn');
-    const downloadMp3Btn = document.getElementById('downloadMp3Btn');
     const downloadStatus = document.getElementById('downloadStatus');
     const homeBtn = document.getElementById('homeBtn');
     const historyBtn = document.getElementById('historyBtn');
@@ -17,7 +11,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const moviesBtn = document.getElementById('moviesBtn');
     const kidsBtn = document.getElementById('kidsBtn');
     const musicBtn = document.getElementById('musicBtn');
-    
+    const seriesBtn = document.getElementById('seriesBtn');
+    const gamesBtn = document.getElementById('gamesBtn');
+    const gameArea = document.getElementById('gameArea');
+    const gameIframe = document.getElementById('gameIframe');
+    const mainContent = document.querySelector('main');
+    const themeToggle = document.getElementById('themeToggle');
+
+    // Theme Management
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-mode');
+    }
+
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('light-mode');
+            const theme = document.body.classList.contains('light-mode') ? 'light' : 'dark';
+            localStorage.setItem('theme', theme);
+        });
+    }
+
     // Karaoke Mode Elements
     const karaokeModal = document.getElementById('karaokeModal');
     const closeKaraokeBtn = document.getElementById('closeKaraokeBtn');
@@ -28,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const lyricsDiv = document.getElementById('lyrics');
     const recordBtn = document.getElementById('recordBtn');
     const recordingCanvas = document.getElementById('recordingCanvas');
-    
+
     let currentVideoId = null;
     let currentVideoObj = null;
     let webcamStream = null;
@@ -42,30 +56,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentQuery = '';
     let isLoading = false;
-    let isKaraokeSearch = false; 
+    let isKaraokeSearch = false;
     let isMovieSearch = false;
     let isKidsSearch = false;
     let isMusicSearch = false; // Music Mode State
+    let isSeriesSearch = false; // Series Mode State
+    let isGamesSearch = false; // Games Mode State
     let currentMovieCategory = 'All';
 
     // Navigation
     function setActiveNav(btn) {
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        if(btn) btn.classList.add('active');
-        
+        if (btn) btn.classList.add('active');
+
         // Sidebars
         const sidebarHome = document.getElementById('sidebar-home');
         const sidebarKaraoke = document.getElementById('sidebar-karaoke');
         const sidebarMovies = document.getElementById('sidebar-movies');
         const sidebarKids = document.getElementById('sidebar-kids');
         const sidebarMusic = document.getElementById('sidebar-music');
-        
+        const sidebarSeries = document.getElementById('sidebar-series');
+        const sidebarGames = document.getElementById('sidebar-games');
+
         // Hide all
         sidebarHome.classList.add('hidden');
         sidebarKaraoke.classList.add('hidden');
         sidebarMovies.classList.add('hidden');
         sidebarKids.classList.add('hidden');
         sidebarMusic.classList.add('hidden');
+        sidebarSeries.classList.add('hidden');
+        sidebarGames.classList.add('hidden');
+
+        // Reset display
+        resultsGrid.classList.remove('hidden');
+        if (gameArea) gameArea.classList.add('hidden');
+        if (gameIframe) gameIframe.src = '';
+        if (mainContent) mainContent.classList.remove('no-padding');
 
         if (btn === homeBtn) {
             sidebarHome.classList.remove('hidden');
@@ -77,6 +103,10 @@ document.addEventListener('DOMContentLoaded', () => {
             sidebarKids.classList.remove('hidden');
         } else if (btn === musicBtn) {
             sidebarMusic.classList.remove('hidden');
+        } else if (btn === seriesBtn) {
+            sidebarSeries.classList.remove('hidden');
+        } else if (btn === gamesBtn) {
+            sidebarGames.classList.remove('hidden');
         }
     }
 
@@ -94,6 +124,8 @@ document.addEventListener('DOMContentLoaded', () => {
         isMovieSearch = false;
         isKidsSearch = false;
         isMusicSearch = false;
+        isSeriesSearch = false;
+        isGamesSearch = false;
         searchInput.value = '';
         currentQuery = '';
         loadRecommendations();
@@ -105,13 +137,14 @@ document.addEventListener('DOMContentLoaded', () => {
         isMovieSearch = false;
         isKidsSearch = false;
         isMusicSearch = false;
+        isSeriesSearch = false;
         searchInput.value = '';
         showLoading();
-        
+
         // Reset and set active
         document.querySelectorAll('.category-karaoke-btn').forEach(b => b.classList.remove('active'));
         document.querySelector('.category-karaoke-btn[data-query="Lagu Karaoke Populer"]').classList.add('active');
-        
+
         performSearch('Lagu Karaoke Populer Indonesia');
     });
 
@@ -121,13 +154,14 @@ document.addEventListener('DOMContentLoaded', () => {
         isMovieSearch = true;
         isKidsSearch = false;
         isMusicSearch = false;
+        isSeriesSearch = false;
         currentMovieCategory = 'All';
         searchInput.value = '';
         showLoading();
         // Reset category active state
         document.querySelectorAll('.category-movie-btn').forEach(b => b.classList.remove('active'));
         document.querySelector('.category-movie-btn[data-genre="All"]').classList.add('active');
-        
+
         performSearch('Film Indonesia Full Movie');
     });
 
@@ -137,14 +171,15 @@ document.addEventListener('DOMContentLoaded', () => {
         isMovieSearch = false;
         isKidsSearch = true;
         isMusicSearch = false;
+        isSeriesSearch = false;
         searchInput.value = '';
         showLoading();
-        
+
         // Reset kids category
         document.querySelectorAll('.category-kids-btn').forEach(b => b.classList.remove('active'));
-        document.querySelector('.category-kids-btn[data-query="Kartun Anak"]').classList.add('active');
+        document.querySelector('.category-kids-btn[data-query="Kartun Anak Dub Indo"]').classList.add('active');
 
-        performSearch('Kartun Anak Bahasa Indonesia');
+        performSearch('Kartun Anak Dub Indo');
     });
 
     musicBtn.addEventListener('click', () => {
@@ -153,14 +188,65 @@ document.addEventListener('DOMContentLoaded', () => {
         isMovieSearch = false;
         isKidsSearch = false;
         isMusicSearch = true;
+        isSeriesSearch = false;
+        isGamesSearch = false;
         searchInput.value = '';
         showLoading();
-        
+
         // Reset music category
         document.querySelectorAll('.category-music-btn').forEach(b => b.classList.remove('active'));
-        document.querySelector('.category-music-btn[data-query="Lagu Indonesia Terbaru"]').classList.add('active');
+        document.querySelector('.category-music-btn[data-query="Lagu Indonesia Populer 2024"]').classList.add('active');
 
-        performSearch('Lagu Indonesia Terbaru');
+        performSearch('Lagu Indonesia Populer 2024');
+    });
+
+    seriesBtn.addEventListener('click', () => {
+        setActiveNav(seriesBtn);
+        isKaraokeSearch = false;
+        isMovieSearch = false;
+        isKidsSearch = false;
+        isMusicSearch = false;
+        isSeriesSearch = true;
+        isGamesSearch = false;
+        searchInput.value = '';
+        showLoading();
+
+        // Reset series category
+        document.querySelectorAll('.category-series-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('.category-series-btn[data-query="Captain Tsubasa Episode"]').classList.add('active');
+
+        performSearch('Captain Tsubasa Episode');
+    });
+
+    gamesBtn.addEventListener('click', () => {
+        setActiveNav(gamesBtn);
+        isKaraokeSearch = false;
+        isMovieSearch = false;
+        isKidsSearch = false;
+        isMusicSearch = false;
+        isSeriesSearch = false;
+        isGamesSearch = true;
+        searchInput.value = '';
+        showLoading();
+
+        // Reset and set active
+        document.querySelectorAll('.category-game-btn').forEach(b => b.classList.remove('active'));
+        const defaultGame = document.querySelector('.category-game-btn[data-url="/static/games/snake.html"]');
+        if (defaultGame) {
+            defaultGame.classList.add('active');
+            resultsGrid.classList.add('hidden');
+            gameArea.classList.remove('hidden');
+            gameIframe.src = defaultGame.dataset.url;
+            if (mainContent) mainContent.classList.add('no-padding');
+        }
+    });
+
+    document.querySelectorAll('.category-series-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.category-series-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            performSearch(btn.dataset.query);
+        });
     });
 
 
@@ -177,7 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setActiveNav(downloadsBtn);
         loadDownloads();
     });
-    
+
     playlistsBtn.addEventListener('click', () => {
         setActiveNav(playlistsBtn);
         loadPlaylists();
@@ -209,11 +295,39 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.category-movie-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             currentMovieCategory = btn.dataset.genre;
-            
-            let queryGenre = currentMovieCategory;
-            if (currentMovieCategory === 'All') queryGenre = '';
-            
-            const query = `Film ${queryGenre} Full Movie Bahasa Indonesia Sub Indo`;
+            let query = '';
+            if (currentMovieCategory === 'Dubbing Indonesia') {
+                query = `Film Dubbing Indonesia Full Movie`;
+            } else if (currentMovieCategory === 'Korea') {
+                query = `Film Korea Full Movie Sub Indo`;
+            } else if (currentMovieCategory === 'Drama China') {
+                query = `Drama China Full Movie Sub Indo`;
+            } else if (currentMovieCategory === 'Film Pendek Cina') {
+                query = `Film Pendek Cina Sub Indo`;
+            } else if (currentMovieCategory === 'FTV') {
+                query = `FTV Indonesia Terbaru Full`;
+            } else if (currentMovieCategory === 'Sinetron') {
+                query = `Sinetron Indonesia Terbaru Full Episode`;
+            } else if (currentMovieCategory === 'Film Bioskop') {
+                query = `Film Bioskop Indonesia Terbaru Full Movie`;
+            } else if (currentMovieCategory === 'Film Pendek') {
+                query = `Film Pendek Indonesia Terbaik`;
+            } else if (currentMovieCategory === 'Top 10') {
+                query = `Trending Movies 2024 Full Movie`;
+            } else if (currentMovieCategory === 'Netflix Originals') {
+                query = `Netflix Originals Movies Full Movie Sub Indo`;
+            } else if (currentMovieCategory === 'Anime') {
+                query = `Anime Movie Full Movie Sub Indo`;
+            } else if (currentMovieCategory === 'Romance') {
+                query = `Film Romantis Full Movie Sub Indo`;
+            } else if (currentMovieCategory === 'Crime Thriller') {
+                query = `Crime Thriller Movie Full Movie Sub Indo`;
+            } else if (currentMovieCategory === 'Reality Show') {
+                query = `Reality Show Populer Sub Indo`;
+            } else {
+                let queryGenre = currentMovieCategory === 'All' ? '' : currentMovieCategory;
+                query = `Film ${queryGenre} Full Movie Bahasa Indonesia Sub Indo`;
+            }
             performSearch(query);
         });
     });
@@ -223,7 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.category-kids-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            const query = `${btn.dataset.query} Bahasa Indonesia`;
+            const query = btn.dataset.query;
             performSearch(query);
         });
     });
@@ -238,17 +352,47 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
+    // Game Sidebar
+    document.querySelectorAll('.category-game-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.category-game-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            if (btn.dataset.type === 'local') {
+                resultsGrid.classList.add('hidden');
+                gameArea.classList.remove('hidden');
+                gameIframe.src = btn.dataset.url;
+                if (mainContent) mainContent.classList.add('no-padding');
+            } else {
+                resultsGrid.classList.remove('hidden');
+                gameArea.classList.add('hidden');
+                gameIframe.src = '';
+                if (mainContent) mainContent.classList.remove('no-padding');
+                performSearch(btn.dataset.query);
+            }
+        });
+    });
 
     // Search
     searchBtn.addEventListener('click', () => {
         const query = searchInput.value.trim();
-        if (query) performSearch(query);
+        if (query) {
+            resultsGrid.classList.remove('hidden');
+            if (gameArea) gameArea.classList.add('hidden');
+            if (gameIframe) gameIframe.src = '';
+            performSearch(query);
+        }
     });
 
     searchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             const query = searchInput.value.trim();
-            if (query) performSearch(query);
+            if (query) {
+                resultsGrid.classList.remove('hidden');
+                if (gameArea) gameArea.classList.add('hidden');
+                if (gameIframe) gameIframe.src = '';
+                performSearch(query);
+            }
         }
     });
 
@@ -267,12 +411,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isMovieSearch) {
                 const duration = video.duration || '';
                 const parts = duration.split(':');
-                
+
                 if (parts.length === 3) {
                     // H:M:S -> OK
                 } else if (parts.length === 2) {
                     // MM:SS -> Skip
-                    return; 
+                    return;
                 } else {
                     return;
                 }
@@ -280,8 +424,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const card = document.createElement('div');
             card.className = 'video-card';
-            card.onclick = () => openVideo(video); 
-            
+            card.onclick = () => openVideo(video);
+
             let thumbnailUrl = '';
             if (Array.isArray(video.thumbnails) && video.thumbnails.length > 0) {
                 thumbnailUrl = video.thumbnails[0];
@@ -311,7 +455,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof queryOverride === 'string') {
             query = queryOverride;
         } else {
-             query = searchInput.value.trim();
+            query = searchInput.value.trim();
         }
 
         if (!query) return;
@@ -320,24 +464,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // If Karaoke tab is active, append "lyrics" if not present
         if (isKaraokeSearch) {
-             const lower = query.toLowerCase();
-             if (!lower.includes('lyrics') && !lower.includes('karaoke')) {
-                 currentQuery += ' lyrics';
-             }
+            const lower = query.toLowerCase();
+            if (!lower.includes('lyrics') && !lower.includes('karaoke')) {
+                currentQuery += ' lyrics';
+            }
         }
-        
+
         isLoading = true;
-        
+
         // Disable lazy loading call until new search is done
         window.removeEventListener('scroll', handleScroll);
-        
-        if (!queryOverride) { 
-             resultsGrid.innerHTML = '<div class="placeholder-message">Sedang mencari...</div>';
+
+        if (!queryOverride) {
+            resultsGrid.innerHTML = '<div class="placeholder-message">Sedang mencari...</div>';
         }
         // If queryOverride (like category click), we handle loading msg in click handler or stick with prev
         // Actually best to show loading
         // But performSearch is generally cleared.
-        
+
         if (isMovieSearch && queryOverride && !queryOverride.includes('Movie')) {
             // manual search in movies tab? allow
         }
@@ -355,11 +499,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 isLoading = false;
             });
     }
-    
+
     function loadMore() {
         if (isLoading || !currentQuery) return;
         isLoading = true;
-        
+
         const loadingDiv = document.createElement('div');
         loadingDiv.className = 'loading-container';
         loadingDiv.innerHTML = '<div class="spinner"></div>'; // Use spinner for load more too
@@ -383,13 +527,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleScroll() {
         if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
-             loadMore();
+            loadMore();
         }
     }
 
     function loadRecommendations() {
         resultsGrid.innerHTML = '<div class="placeholder-message">Loading recommendations...</div>';
-        
+
         fetch('/api/history')
             .then(response => response.json())
             .then(history => {
@@ -398,18 +542,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Search for the title of the last watched video to get recommendations/related
                     performSearch(lastVideo.title);
                 } else {
-                    resultsGrid.innerHTML = '<div class="placeholder-message">Search for something to start watching.</div>';
+                    // Fallback to trending if no history
+                    performSearch("Trending Indonesia");
                 }
             })
             .catch(err => {
                 console.error('Error loading history for recommendations:', err);
-                resultsGrid.innerHTML = '<div class="placeholder-message">Search for something to start watching.</div>';
+                performSearch("Trending Indonesia");
             });
     }
 
     function loadDownloads() {
         resultsGrid.innerHTML = '<div class="placeholder-message">Loading downloads...</div>';
-        
+
         fetch('/api/downloads')
             .then(response => response.json())
             .then(data => {
@@ -424,7 +569,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     card.className = 'video-card download-card';
                     // Open file location on click? Or maybe nothing for now.
                     // Let's just create a simple card.
-                    
+
                     const isVideo = file.name.endsWith('.mp4');
                     const icon = isVideo ? '🎥' : '🎵';
 
@@ -449,7 +594,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function loadHistory() {
         resultsGrid.innerHTML = '<div class="placeholder-message">Loading history...</div>';
-        
+
         fetch('/api/history')
             .then(response => response.json())
             .then(data => {
@@ -470,9 +615,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Ensure thumbnails is a string if it's an array
         let thumbUrl = '';
         if (Array.isArray(video.thumbnails) && video.thumbnails.length > 0) {
-             thumbUrl = video.thumbnails[0];
+            thumbUrl = video.thumbnails[0];
         } else if (typeof video.thumbnails === 'string') {
-             thumbUrl = video.thumbnails;
+            thumbUrl = video.thumbnails;
         }
 
         const historyItem = {
@@ -495,41 +640,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function openVideo(video) {
         if (!video) return;
-        currentVideoId = video.id; // video is now the full object
-        currentVideoObj = video; // Save for adding to playlist
-        
-        console.log('Opening video:', currentVideoId);
+        currentVideoId = video.id;
+        currentVideoObj = video;
+
         // Save to history
         addToHistory(video);
-        
-        // If in Karaoke Mode (Tab), open native player directly!
-        if (isKaraokeSearch) {
-            window.open(`/karaoke/${video.id}`, '_blank');
-            return;
-        }
-        
-        // Close native PiP video if active
-        // But pipVideoElement is in other scope...
-        // Let's rely on PiP closing being manual or browser behavior (user can keep it open!)
-        // Or we can try to find it.
 
-        modal.style.display = 'block';
-        // Force reflow
-        void modal.offsetWidth;
-        modal.classList.add('active');
-        
-        // Use youtube-nocookie.com which sometimes bypasses strict embed restrictions
-        videoPlayer.src = `https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1`;
-        modalTitle.textContent = video.title;
-        downloadStatus.textContent = ''; // Reset status
+        // Open native player directly in a new tab for EVERY video!
+        window.open(`/karaoke/${video.id}`, '_blank');
     }
 
     function initiateDownload(format) {
         if (!currentVideoId) return;
-        
+
         const btn = format === 'mp4' ? downloadMp4Btn : downloadMp3Btn;
         const originalText = btn.textContent;
-        
+
         btn.disabled = true;
         btn.textContent = 'Starting...';
         downloadStatus.textContent = `Downloading ${format.toUpperCase()}... please wait.`;
@@ -567,20 +693,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Event Listeners
     searchBtn.addEventListener('click', performSearch);
-    
+
     searchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             performSearch();
         }
     });
 
-    closeModal.addEventListener('click', closeVideoModal);
-    
-    window.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            closeVideoModal();
-        }
-    });
+    // Event Listeners for search
 
     // Download buttons
     downloadMp4Btn.addEventListener('click', () => initiateDownload('mp4'));
@@ -592,7 +712,7 @@ document.addEventListener('DOMContentLoaded', () => {
         searchInput.value = '';
         loadRecommendations();
     });
-    
+
     historyBtn.addEventListener('click', loadHistory);
     document.getElementById('downloadsBtn').addEventListener('click', loadDownloads);
     // Playlist Logic
@@ -609,12 +729,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function loadPlaylists(forSelection = false) {
         resultsGrid.innerHTML = '<div class="placeholder-message">Loading playlists...</div>';
-        
+
         fetch('/api/playlists')
             .then(response => response.json())
             .then(data => {
                 const names = Object.keys(data);
-                
+
                 if (forSelection) {
                     playlistList.innerHTML = '';
                     if (names.length === 0) {
@@ -643,19 +763,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     names.forEach(name => {
                         const card = document.createElement('div');
                         card.className = 'video-card download-card';
-                        
+
                         // Get thumbnail from first video if available
                         let thumbHTML = '<div class="thumbnail-container" style="display: flex; align-items: center; justify-content: center; background: #333; color: #666; font-size: 3rem;">📑</div>';
                         if (data[name].length > 0) {
-                             const firstVal = data[name][0];
-                             // Reuse existing thumbnail logic if possible or simplify
-                             let tUrl = '';
-                             if (Array.isArray(firstVal.thumbnails) && firstVal.thumbnails.length > 0) tUrl = firstVal.thumbnails[0];
-                             else if (typeof firstVal.thumbnails === 'string') tUrl = firstVal.thumbnails;
-                             
-                             if (tUrl) {
-                                 thumbHTML = `<div class="thumbnail-container"><img src="${tUrl}" alt="${name}"></div>`;
-                             }
+                            const firstVal = data[name][0];
+                            // Reuse existing thumbnail logic if possible or simplify
+                            let tUrl = '';
+                            if (Array.isArray(firstVal.thumbnails) && firstVal.thumbnails.length > 0) tUrl = firstVal.thumbnails[0];
+                            else if (typeof firstVal.thumbnails === 'string') tUrl = firstVal.thumbnails;
+
+                            if (tUrl) {
+                                thumbHTML = `<div class="thumbnail-container"><img src="${tUrl}" alt="${name}"></div>`;
+                            }
                         }
 
                         card.innerHTML = `
@@ -675,9 +795,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     }
 
-    window.deletePlaylist = function(name) {
+    window.deletePlaylist = function (name) {
         if (!confirm(`Delete playlist "${name}"?`)) return;
-        
+
         fetch(`/api/playlists/${name}`, { method: 'DELETE' })
             .then(res => res.json())
             .then(data => {
@@ -693,7 +813,7 @@ document.addEventListener('DOMContentLoaded', () => {
             resultsGrid.innerHTML = `<div class="placeholder-message">Playlist "${name}" is empty.</div>`;
             return;
         }
-        
+
         // Add header
         const header = document.createElement('div');
         header.style.gridColumn = '1 / -1';
@@ -706,7 +826,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Simplest: just use renderVideos logic here or modify renderVideos.
         // Let's re-use renderVideos by clearing first then appending header? No.
         // Let's iterate manually to avoid modifying renderVideos again.
-        
+
         // Actually, renderVideos(videos, false) clears grid.
         // Let's call renderVideos(videos, false) then PREPEND header?
         renderVideos(videos, false);
@@ -716,61 +836,61 @@ document.addEventListener('DOMContentLoaded', () => {
     function createPlaylist() {
         const name = newPlaylistName.value.trim();
         if (!name) return;
-        
+
         fetch('/api/playlists', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name: name })
         })
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === 'success') {
-                createPlaylistModal.classList.remove('active');
-                setTimeout(() => createPlaylistModal.style.display = 'none', 300);
-                newPlaylistName.value = '';
-                
-                // If we were in "Add to Playlist" mode, refresh that list
-                if (addToPlaylistModal.style.display === 'block') {
-                    loadPlaylists(true);
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    createPlaylistModal.classList.remove('active');
+                    setTimeout(() => createPlaylistModal.style.display = 'none', 300);
+                    newPlaylistName.value = '';
+
+                    // If we were in "Add to Playlist" mode, refresh that list
+                    if (addToPlaylistModal.style.display === 'block') {
+                        loadPlaylists(true);
+                    } else {
+                        loadPlaylists();
+                    }
                 } else {
-                    loadPlaylists();
+                    alert(data.error);
                 }
-            } else {
-                alert(data.error);
-            }
-        });
+            });
     }
 
     function addVideoToPlaylist(name) {
         if (!currentVideoObj) return;
-        
+
         fetch(`/api/playlists/${name}/add`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(currentVideoObj)
         })
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === 'success') {
-                addToPlaylistModal.classList.remove('active');
-                setTimeout(() => addToPlaylistModal.style.display = 'none', 300);
-                if (data.message) {
-                    alert(data.message); // "Already in playlist"
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    addToPlaylistModal.classList.remove('active');
+                    setTimeout(() => addToPlaylistModal.style.display = 'none', 300);
+                    if (data.message) {
+                        alert(data.message); // "Already in playlist"
+                    } else {
+                        alert(`Added to playlist "${name}"`);
+                    }
                 } else {
-                    alert(`Added to playlist "${name}"`);
+                    alert(data.error);
                 }
-            } else {
-                alert(data.error);
-            }
-        });
+            });
     }
-    
+
     // We need to update openVideo to save the full video object globally
     // let currentVideoObj = null; // Duplicate declaration 
 
     // Event Listeners for Playlist
     playlistsBtn.addEventListener('click', () => loadPlaylists(false));
-    
+
     addToPlaylistBtn.addEventListener('click', () => {
         addToPlaylistModal.style.display = 'block';
         addToPlaylistModal.classList.add('active');
@@ -781,19 +901,19 @@ document.addEventListener('DOMContentLoaded', () => {
         createPlaylistModal.classList.remove('active');
         setTimeout(() => createPlaylistModal.style.display = 'none', 300);
     });
-    
+
     closeAddPlaylist.addEventListener('click', () => {
         addToPlaylistModal.classList.remove('active');
         setTimeout(() => addToPlaylistModal.style.display = 'none', 300);
     });
 
     confirmCreatePlaylistBtn.addEventListener('click', createPlaylist);
-    
+
     openCreatePlaylistBtn.addEventListener('click', () => {
         // addToPlaylistModal.classList.remove('active');
         // addToPlaylistModal.style.display = 'none';
         // Keep add open? No, switch.
-        
+
         createPlaylistModal.style.display = 'block';
         createPlaylistModal.classList.add('active');
     });
@@ -812,86 +932,25 @@ document.addEventListener('DOMContentLoaded', () => {
     // Keyboard Shortcuts
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            if (modal.style.display === 'block') closeVideoModal();
             if (createPlaylistModal.style.display === 'block') {
-                 createPlaylistModal.classList.remove('active');
-                 setTimeout(() => createPlaylistModal.style.display = 'none', 300);
+                createPlaylistModal.classList.remove('active');
+                setTimeout(() => createPlaylistModal.style.display = 'none', 300);
             }
             if (addToPlaylistModal.style.display === 'block') {
-                 addToPlaylistModal.classList.remove('active');
-                 setTimeout(() => addToPlaylistModal.style.display = 'none', 300);
+                addToPlaylistModal.classList.remove('active');
+                setTimeout(() => addToPlaylistModal.style.display = 'none', 300);
             }
         }
     });
-    
+
     // Load recommendations on startup
     loadRecommendations();
-    // Native PiP Logic
-    const popupPlayerBtn = document.getElementById('popupPlayerBtn');
-    let pipVideoElement = null;
-
-    popupPlayerBtn.addEventListener('click', async () => {
-        if (!currentVideoId) return;
-        
-        const originalText = popupPlayerBtn.textContent;
-        popupPlayerBtn.disabled = true;
-        popupPlayerBtn.textContent = 'Loading...';
-
-        try {
-            // Fetch direct stream URL
-            const response = await fetch(`/api/stream?id=${currentVideoId}`);
-            const data = await response.json();
-            
-            if (data.error) {
-                alert('Error loading stream: ' + data.error);
-                return;
-            }
-
-            // Create or reuse hidden video element
-            if (!pipVideoElement) {
-                pipVideoElement = document.createElement('video');
-                pipVideoElement.style.display = 'none'; // Keep hidden
-                document.body.appendChild(pipVideoElement);
-                
-                // Handle PiP exit
-                pipVideoElement.addEventListener('leavepictureinpicture', () => {
-                    pipVideoElement.pause();
-                    pipVideoElement.src = '';
-                    // Optionally restore modal?
-                    // For now, just stop.
-                });
-            }
-
-            pipVideoElement.src = data.url;
-            // pipVideoElement.crossOrigin = 'anonymous'; // Removed to avoid strict CORS check issues with YouTube streams
-            
-            // We must play() before requestPictureInPicture()
-            try {
-                await pipVideoElement.play();
-                await pipVideoElement.requestPictureInPicture();
-                // Hide main modal since PiP is active
-                modal.classList.remove('active');
-                setTimeout(() => modal.style.display = 'none', 300);
-                videoPlayer.src = ''; // Stop main player
-            } catch (playErr) {
-                console.error("Play/PiP error:", playErr);
-                alert("Could not start video playback. Browser policies might block this stream.");
-            }
-
-        } catch (err) {
-            console.error('PiP Error:', err);
-            alert('Failed to start Picture-in-Picture: ' + err.message);
-        } finally {
-            popupPlayerBtn.disabled = false;
-            popupPlayerBtn.textContent = originalText;
-        }
-    });
+    // PiP and modal logic removed as players now open in new tabs
 
     // Remove old floating player logic entirely if replacing?
     // User asked "why not frontmost", giving Native PiP is the answer.
     // So we can comment out or remove the old "floatingPlayer" HTML references if we want, 
     // but the task is to FIX the behavior.
-    // I will disable the old floating player button handler (which I just replaced above by reusing the ID).
     // The previous event listener was attached to 'popupPlayerBtn' as well.
     // Since I'm re-declaring `const popupPlayerBtn`, let's make sure we don't have double listeners
     // actually, `const` redeclaration in the same scope would error if I pasted this into the same block.

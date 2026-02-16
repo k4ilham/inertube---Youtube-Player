@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Dino Jump</title>
+    <style>
+        body {
+            background: #000;
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .ui {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #4caf50;
+            font-size: 24px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="ui">Score: <span id="scoreVal">0</span></div>
+    <div class="controls">Press SPACE to Jump</div>
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('scoreVal');
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            groundY = canvas.height - 100;
+            dino.y = groundY - dino.h;
+        }
+
+        const dinoImg = new Image();
+        dinoImg.src = '/static/games/assets/dino_hero.png';
+        const cactusImg = new Image();
+        cactusImg.src = '/static/games/assets/cactus.png';
+
+        function playSound(freq, type = 'sine', duration = 0.1) {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) { }
+        }
+
+        let score = 0;
+        let groundY = 0;
+        let dino = { x: 100, y: 0, w: 60, h: 60, dy: 0, jumpForce: 15, gravity: 0.8, grounded: true };
+        let obstacles = [];
+        let gameActive = true;
+
+        resize();
+        window.addEventListener('resize', resize);
+
+        window.addEventListener('keydown', e => {
+            if (e.code === 'Space' && dino.grounded) {
+                dino.dy = -dino.jumpForce;
+                dino.grounded = false;
+                playSound(440, 'triangle');
+            }
+        });
+
+        canvas.onclick = () => {
+            if (dino.grounded) {
+                dino.dy = -dino.jumpForce;
+                dino.grounded = false;
+                playSound(440, 'triangle');
+            }
+        };
+
+        function createObstacle() {
+            if (Math.random() < 0.02) {
+                obstacles.push({ x: canvas.width, y: groundY - 50, w: 40, h: 50 });
+            }
+        }
+
+        function update() {
+            if (!gameActive) return;
+
+            dino.dy += dino.gravity;
+            dino.y += dino.dy;
+
+            if (dino.y > groundY - dino.h) {
+                dino.y = groundY - dino.h;
+                dino.dy = 0;
+                dino.grounded = true;
+            }
+
+            obstacles.forEach((obs, index) => {
+                obs.x -= 8;
+                if (obs.x + obs.w < 0) {
+                    obstacles.splice(index, 1);
+                    score++;
+                    scoreEl.innerText = score;
+                }
+
+                const padding = 10;
+                if (dino.x + padding < obs.x + obs.w - padding &&
+                    dino.x + dino.w - padding > obs.x + padding &&
+                    dino.y + padding < obs.y + obs.h - padding &&
+                    dino.y + dino.h - padding > obs.y + padding) {
+                    gameActive = false;
+                    playSound(150, 'sawtooth', 0.5);
+                    alert('Game Over! Score: ' + score);
+                    location.reload();
+                }
+            });
+
+            createObstacle();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Ground
+            ctx.strokeStyle = '#333';
+            ctx.beginPath();
+            ctx.moveTo(0, groundY);
+            ctx.lineTo(canvas.width, groundY);
+            ctx.stroke();
+
+            // Dino
+            if (dinoImg.complete) {
+                ctx.drawImage(dinoImg, dino.x, dino.y, dino.w, dino.h);
+            } else {
+                ctx.fillStyle = '#4caf50';
+                ctx.fillRect(dino.x, dino.y, dino.w, dino.h);
+            }
+
+            // Obstacles
+            obstacles.forEach(obs => {
+                if (cactusImg.complete) {
+                    ctx.drawImage(cactusImg, obs.x, obs.y, obs.w, obs.h);
+                } else {
+                    ctx.fillStyle = '#ff5252';
+                    ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
+                }
+            });
+
+            update();
+            requestAnimationFrame(draw);
+        }
+
+        draw();
+    </script>
+</body>
+
+</html>
