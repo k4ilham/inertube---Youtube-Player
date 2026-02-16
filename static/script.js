@@ -15,14 +15,38 @@ document.addEventListener('DOMContentLoaded', () => {
     const playlistsBtn = document.getElementById('playlistsBtn');
     const karaokeNavBtn = document.getElementById('karaokeNavBtn');
     const moviesBtn = document.getElementById('moviesBtn');
+    const kidsBtn = document.getElementById('kidsBtn');
+    const musicBtn = document.getElementById('musicBtn');
+    const kailhamBtn = document.getElementById('kailhamBtn');
+    
+    // Karaoke Mode Elements
+    const karaokeModal = document.getElementById('karaokeModal');
+    const closeKaraokeBtn = document.getElementById('closeKaraokeBtn');
+    const duetToggleBtn = document.getElementById('duetToggleBtn');
+    const vocalRemoverToggle = document.getElementById('vocalRemoverToggle');
+    const webcamContainer = document.getElementById('webcamContainer');
+    const webcamPreview = document.getElementById('webcamPreview');
+    const lyricsDiv = document.getElementById('lyrics');
+    const recordBtn = document.getElementById('recordBtn');
+    const recordingCanvas = document.getElementById('recordingCanvas');
     
     let currentVideoId = null;
     let currentVideoObj = null;
+    let webcamStream = null;
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let isRecording = false;
+    let recordingStream = null;
+    let micStream = null;
+    let recordingInterval = null;
+
 
     let currentQuery = '';
     let isLoading = false;
     let isKaraokeSearch = false; 
-    let isMovieSearch = false; // Movie mode state
+    let isMovieSearch = false;
+    let isKidsSearch = false;
+    let isMusicSearch = false; // Music Mode State
     let currentMovieCategory = 'All';
 
     // Navigation
@@ -30,20 +54,51 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         if(btn) btn.classList.add('active');
         
-        // Hide sidebar by default, show only if movies
-        const sidebar = document.getElementById('sidebar');
-        if (btn === moviesBtn) {
-            sidebar.classList.remove('hidden');
-        } else {
-            sidebar.classList.add('hidden');
+        // Sidebars
+        const sidebarHome = document.getElementById('sidebar-home');
+        const sidebarKaraoke = document.getElementById('sidebar-karaoke');
+        const sidebarMovies = document.getElementById('sidebar-movies');
+        const sidebarKids = document.getElementById('sidebar-kids');
+        const sidebarMusic = document.getElementById('sidebar-music');
+        const sidebarKailham = document.getElementById('sidebar-kailham');
+        
+        // Hide all
+        sidebarHome.classList.add('hidden');
+        sidebarKaraoke.classList.add('hidden');
+        sidebarMovies.classList.add('hidden');
+        sidebarKids.classList.add('hidden');
+        sidebarMusic.classList.add('hidden');
+        if(sidebarKailham) sidebarKailham.classList.add('hidden');
+
+        if (btn === homeBtn) {
+            sidebarHome.classList.remove('hidden');
+        } else if (btn === karaokeNavBtn) {
+            sidebarKaraoke.classList.remove('hidden');
+        } else if (btn === moviesBtn) {
+            sidebarMovies.classList.remove('hidden');
+        } else if (btn === kidsBtn) {
+            sidebarKids.classList.remove('hidden');
+        } else if (btn === musicBtn) {
+            sidebarMusic.classList.remove('hidden');
+        } else if (btn === kailhamBtn) {
+            sidebarKailham.classList.remove('hidden');
         }
+    }
+
+    function showLoading() {
+        resultsGrid.innerHTML = `
+            <div class="loading-container">
+                <div class="spinner"></div>
+            </div>
+        `;
     }
 
     homeBtn.addEventListener('click', () => {
         setActiveNav(homeBtn);
         isKaraokeSearch = false;
         isMovieSearch = false;
-        resultsGrid.innerHTML = '<div class="placeholder-message">Memuat rekomendasi...</div>';
+        isKidsSearch = false;
+        isMusicSearch = false;
         searchInput.value = '';
         currentQuery = '';
         loadRecommendations();
@@ -53,8 +108,15 @@ document.addEventListener('DOMContentLoaded', () => {
         setActiveNav(karaokeNavBtn);
         isKaraokeSearch = true;
         isMovieSearch = false;
+        isKidsSearch = false;
+        isMusicSearch = false;
         searchInput.value = '';
-        resultsGrid.innerHTML = '<div class="placeholder-message">Memuat lagu Karaoke...</div>';
+        showLoading();
+        
+        // Reset and set active
+        document.querySelectorAll('.category-karaoke-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('.category-karaoke-btn[data-query="Lagu Karaoke Populer"]').classList.add('active');
+        
         performSearch('Lagu Karaoke Populer Indonesia');
     });
 
@@ -62,20 +124,72 @@ document.addEventListener('DOMContentLoaded', () => {
         setActiveNav(moviesBtn);
         isKaraokeSearch = false;
         isMovieSearch = true;
+        isKidsSearch = false;
+        isMusicSearch = false;
         currentMovieCategory = 'All';
         searchInput.value = '';
-        resultsGrid.innerHTML = '<div class="placeholder-message">Memuat Film Indonesia...</div>';
+        showLoading();
         // Reset category active state
-        document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-        document.querySelector('.category-btn[data-genre="All"]').classList.add('active');
+        document.querySelectorAll('.category-movie-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('.category-movie-btn[data-genre="All"]').classList.add('active');
         
         performSearch('Film Indonesia Full Movie');
+    });
+
+    kidsBtn.addEventListener('click', () => {
+        setActiveNav(kidsBtn);
+        isKaraokeSearch = false;
+        isMovieSearch = false;
+        isKidsSearch = true;
+        isMusicSearch = false;
+        searchInput.value = '';
+        showLoading();
+        
+        // Reset kids category
+        document.querySelectorAll('.category-kids-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('.category-kids-btn[data-query="Kartun Anak"]').classList.add('active');
+
+        performSearch('Kartun Anak Bahasa Indonesia');
+    });
+
+    musicBtn.addEventListener('click', () => {
+        setActiveNav(musicBtn);
+        isKaraokeSearch = false;
+        isMovieSearch = false;
+        isKidsSearch = false;
+        isMusicSearch = true;
+        searchInput.value = '';
+        showLoading();
+        
+        // Reset music category
+        document.querySelectorAll('.category-music-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('.category-music-btn[data-query="Lagu Indonesia Terbaru"]').classList.add('active');
+
+        performSearch('Lagu Indonesia Terbaru');
+    });
+
+    kailhamBtn.addEventListener('click', () => {
+        setActiveNav(kailhamBtn);
+        isKaraokeSearch = false;
+        isMovieSearch = false;
+        isKidsSearch = false;
+        isMusicSearch = false;
+        searchInput.value = '';
+        showLoading();
+        
+         // Reset category
+        document.querySelectorAll('.category-kailham-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('.category-kailham-btn[data-query="Kailham Maulana"]').classList.add('active');
+
+        performSearch('Kailham Maulana');
     });
 
     historyBtn.addEventListener('click', () => {
         setActiveNav(historyBtn);
         isKaraokeSearch = false;
         isMovieSearch = false;
+        isKidsSearch = false;
+        isMusicSearch = false;
         loadHistory();
     });
 
@@ -89,14 +203,33 @@ document.addEventListener('DOMContentLoaded', () => {
         loadPlaylists();
     });
 
-    // Sidebar Categories
+    // === SIDEBAR LISTENERS ===
+
+    // Home Sidebar
     document.querySelectorAll('.category-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+            performSearch(btn.dataset.query);
+        });
+    });
+
+    // Karaoke Sidebar
+    document.querySelectorAll('.category-karaoke-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.category-karaoke-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            performSearch(btn.dataset.query);
+        });
+    });
+
+    // Movies Sidebar
+    document.querySelectorAll('.category-movie-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.category-movie-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
             currentMovieCategory = btn.dataset.genre;
             
-            // Translate genre to Indonesian for search query if needed, or keep English genre + "Bahasa Indonesia"
             let queryGenre = currentMovieCategory;
             if (currentMovieCategory === 'All') queryGenre = '';
             
@@ -104,6 +237,35 @@ document.addEventListener('DOMContentLoaded', () => {
             performSearch(query);
         });
     });
+
+    // Kids Sidebar
+    document.querySelectorAll('.category-kids-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.category-kids-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const query = `${btn.dataset.query} Bahasa Indonesia`;
+            performSearch(query);
+        });
+    });
+
+    // Music Sidebar
+    document.querySelectorAll('.category-music-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.category-music-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            performSearch(btn.dataset.query);
+        });
+    });
+
+    // Kailham Sidebar
+    document.querySelectorAll('.category-kailham-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.category-kailham-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            performSearch(btn.dataset.query);
+        });
+    });
+
 
     // Search
     searchBtn.addEventListener('click', () => {
@@ -227,11 +389,8 @@ document.addEventListener('DOMContentLoaded', () => {
         isLoading = true;
         
         const loadingDiv = document.createElement('div');
-        loadingDiv.className = 'loading-more';
-        loadingDiv.textContent = 'Memuat lagi...';
-        loadingDiv.style.textAlign = 'center';
-        loadingDiv.style.padding = '20px';
-        loadingDiv.style.color = '#aaa';
+        loadingDiv.className = 'loading-container';
+        loadingDiv.innerHTML = '<div class="spinner"></div>'; // Use spinner for load more too
         resultsGrid.appendChild(loadingDiv);
 
         fetch(`/api/search?q=${encodeURIComponent(currentQuery)}&next=true`)
@@ -771,64 +930,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Karaoke Mode Logic
     const karaokeBtn = document.getElementById('karaokeBtn');
-    const karaokeView = document.getElementById('karaokeView');
-    const lyricsContainer = document.getElementById('lyricsContainer');
-    const vocalRemoverToggle = document.getElementById('vocalRemoverToggle');
     let karaokeVideoElement = null;
     let audioContext = null;
     let audioSource = null;
     let channelSplitter = null;
     let channelMerger = null;
-    let gainNode = null;
     let lyricsData = [];
-    
-    window.closeKaraokeMode = function() {
-        if (karaokeVideoElement) {
-            karaokeVideoElement.pause();
-            karaokeVideoElement.src = '';
-            // Remove from DOM to be clean
-            if (karaokeVideoElement.parentNode) {
-                karaokeVideoElement.parentNode.removeChild(karaokeVideoElement);
-            }
-            karaokeVideoElement = null;
-        }
-        if (audioContext) {
-            audioContext.close();
-            audioContext = null;
-        }
-        karaokeView.style.display = 'none';
-        
-        // If we came from Home (Modal), show Modal again.
-        // If we came from Karaoke Tab (Direct), we might want to just close everything or show modal?
-        // Let's show the standard modal as "fallback" or just close if user wants to stop.
-        // Standard behavior: show modal (paused).
-        modal.style.display = 'block';
-        modal.classList.add('active');
-        // Reload standard player to be ready
-        videoPlayer.src = `https://www.youtube-nocookie.com/embed/${currentVideoId}?autoplay=0`;
-    };
 
+    // Helper to start Karaoke
     async function startKaraokeMode() {
         if (!currentVideoId) return;
         
-        // Hide standard modal content, show Karaoke View
-        modal.classList.add('active'); // Ensure modal container is open
-        modal.style.display = 'block';
+        karaokeModal.style.display = 'block';
+        karaokeModal.classList.add('active');
         
-        // Hide only the "Standard" parts of the modal? 
-        // actually karaokeView is INSIDE modal-content? No, it's sibling in HTML structure usually or absolute.
-        // valid HTML check:
-        // <div id="videoModal" class="modal">
-        //    <div class="modal-content"> ... </div>
-        //    <div id="karaokeView" ...> ... </div>
-        // </div>
-        // So we need to hide .modal-content and show #karaokeView
-        document.querySelector('.modal-content').style.display = 'none';
-        karaokeView.style.display = 'flex';
+        lyricsDiv.innerHTML = '<div class="placeholder-message">Loading...</div>';
         
-        lyricsContainer.innerHTML = '<div class="placeholder-message">Loading...</div>';
-        
-        // Stop main player iframe
+        // Stop main player iframe if any
         videoPlayer.src = '';
         
         try {
@@ -842,18 +960,14 @@ document.addEventListener('DOMContentLoaded', () => {
             karaokeVideoElement = document.createElement('video');
             karaokeVideoElement.src = data.url;
             karaokeVideoElement.style.width = '100%';
-            karaokeVideoElement.style.maxHeight = '40vh'; // Limit height to leave room for lyrics
             karaokeVideoElement.controls = true;
             karaokeVideoElement.style.display = 'block';
-            karaokeVideoElement.style.margin = '0 auto';
-            karaokeVideoElement.crossOrigin = 'anonymous'; // Try anonymous for Web Audio
+            karaokeVideoElement.crossOrigin = 'anonymous'; 
 
-            // Insert video
-            // Clear previous video if any
-            const existing = karaokeView.querySelector('video');
-            if (existing) existing.remove();
-            
-            karaokeView.insertBefore(karaokeVideoElement, lyricsContainer);
+            // Insert video into karaokePlayer div
+            const playerContainer = document.getElementById('karaokePlayer');
+            playerContainer.innerHTML = '';
+            playerContainer.appendChild(karaokeVideoElement);
             
             await karaokeVideoElement.play();
             
@@ -869,45 +983,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (err) {
             console.error(err);
-            lyricsContainer.innerHTML = `<div class="placeholder-message">Error: ${err.message}. <br> Try reloading or use Popup Player.</div>`;
+            lyricsDiv.innerHTML = `<div class="placeholder-message">Error: ${err.message}. <br> Try reloading or use Popup Player.</div>`;
         }
     }
 
-    karaokeBtn.addEventListener('click', startKaraokeMode);
+    if(karaokeBtn) karaokeBtn.addEventListener('click', startKaraokeMode);
+
+    let recordingDestination = null;
+    let mixedOutput = null;
 
     function setupAudioProcessing(videoEl) {
-        // ... (existing logic) ...
-        // We re-paste it or reference if not replaced.
-        // Wait, replace target includes setupAudioProcessing function definition start.
-        // So I need to include it or cut before it.
-        // The original code has setupAudioProcessing right after the listener.
-        // I'll keep the logic here.
-        
-        // If no crossOrigin ...
-        if (!videoEl.crossOrigin) {
-           // check if actually tainted?
-           // If we set crossOrigin='anonymous', we hope it works.
-        }
-
         try {
+            if (audioContext) audioContext.close();
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
             try {
                 audioSource = audioContext.createMediaElementSource(videoEl);
             } catch (mediaElemErr) {
-                console.warn("Karaoke: " + mediaElemErr);
+                console.warn("Karaoke Web Audio error: " + mediaElemErr);
                 vocalRemoverToggle.disabled = true;
                 return;
             }
             
             channelSplitter = audioContext.createChannelSplitter(2);
             channelMerger = audioContext.createChannelMerger(2);
-            gainNode = audioContext.createGain(); 
-            audioSource.connect(audioContext.destination);
+            
+            // Mixed Output Gain
+            mixedOutput = audioContext.createGain();
+            mixedOutput.connect(audioContext.destination);
+
+            recordingDestination = audioContext.createMediaStreamDestination();
+            mixedOutput.connect(recordingDestination);
+            
+            audioSource.connect(mixedOutput);
             
             vocalRemoverToggle.disabled = false;
             vocalRemoverToggle.onchange = () => {
                 audioSource.disconnect();
-                channelSplitter.disconnect();
                 if (vocalRemoverToggle.checked) {
                     audioSource.connect(channelSplitter);
                     const inverter = audioContext.createGain();
@@ -917,60 +1029,52 @@ document.addEventListener('DOMContentLoaded', () => {
                     channelSplitter.connect(inverter, 1);
                     inverter.connect(channelMerger, 0, 0);
                     inverter.connect(channelMerger, 0, 1);
-                    channelMerger.connect(audioContext.destination);
+                    channelMerger.connect(mixedOutput);
                 } else {
-                    audioSource.connect(audioContext.destination);
+                    audioSource.connect(mixedOutput);
                 }
             };
         } catch (e) {
-            console.warn("Web Audio API error:", e);
+            console.warn("Web Audio API initialization error:", e);
         }
     }
 
     async function fetchLyrics(id) {
-
-        lyricsContainer.innerHTML = '<div class="placeholder-message">Loading lyrics...</div>';
+        lyricsDiv.innerHTML = '<div class="placeholder-message">Loading lyrics...</div>';
         try {
             const res = await fetch(`/api/lyrics?id=${id}`);
             const data = await res.json();
             
             if (data.error) {
-                lyricsContainer.innerHTML = '<div class="placeholder-message">No lyrics found for this video.</div>';
+                lyricsDiv.innerHTML = '<div class="placeholder-message">No lyrics found for this video.</div>';
                 return;
             }
-            
             renderLyrics(data);
         } catch (e) {
-            lyricsContainer.innerHTML = '<div class="placeholder-message">Failed to load lyrics.</div>';
+            lyricsDiv.innerHTML = '<div class="placeholder-message">Failed to load lyrics.</div>';
         }
     }
 
     function renderLyrics(data) {
-        lyricsData = data; // store global
-        lyricsContainer.innerHTML = '';
+        lyricsData = data; 
+        lyricsDiv.innerHTML = '';
         data.forEach((line, index) => {
             const el = document.createElement('div');
             el.className = 'lyric-line';
             el.dataset.index = index;
             el.dataset.start = line.start;
-            el.dataset.duration = line.duration;
             el.textContent = line.text;
             
-            // Click to seek
             el.onclick = () => {
                 if (karaokeVideoElement) karaokeVideoElement.currentTime = line.start;
             };
-            
-            lyricsContainer.appendChild(el);
+            lyricsDiv.appendChild(el);
         });
     }
 
     function syncLyrics() {
         if (!karaokeVideoElement || !lyricsData.length) return;
-        
         const time = karaokeVideoElement.currentTime;
-        
-        // Find active line
         const activeIdx = lyricsData.findIndex((line, i) => {
             const next = lyricsData[i+1];
             if (next) return time >= line.start && time < next.start;
@@ -978,16 +1082,191 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         if (activeIdx !== -1) {
-            // Highlight
-            const currentActive = lyricsContainer.querySelector('.active');
+            const currentActive = lyricsDiv.querySelector('.active');
             if (currentActive) currentActive.classList.remove('active');
-            
-            const newActive = lyricsContainer.children[activeIdx];
+            const newActive = lyricsDiv.children[activeIdx];
             if (newActive) {
                 newActive.classList.add('active');
                 newActive.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }
+    }
+
+    // Modal Close logic for Karaoke
+    if(closeKaraokeBtn) {
+        closeKaraokeBtn.addEventListener('click', () => {
+            stopKaraoke();
+        });
+    }
+
+    function stopKaraoke() {
+        if (isRecording) stopRecording();
+        karaokeModal.style.display = 'none';
+        karaokeModal.classList.remove('active');
+        if (karaokeVideoElement) {
+            karaokeVideoElement.pause();
+            karaokeVideoElement.src = '';
+            karaokeVideoElement = null;
+        }
+        if (audioContext) {
+            audioContext.close();
+            audioContext = null;
+        }
+        stopWebcam();
+        if(duetToggleBtn) {
+            duetToggleBtn.textContent = '📷 Mode Duet';
+            duetToggleBtn.style.background = '#d63384';
+        }
+    }
+
+    // Duet / Webcam Logic
+    if(duetToggleBtn) {
+        duetToggleBtn.addEventListener('click', async () => {
+            if (webcamStream) {
+                stopWebcam();
+                duetToggleBtn.textContent = '📷 Mode Duet';
+                duetToggleBtn.style.background = '#d63384';
+            } else {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    webcamStream = stream;
+                    webcamPreview.srcObject = stream;
+                    webcamContainer.classList.remove('hidden');
+                    duetToggleBtn.textContent = '⏹ Stop Kamera';
+                    duetToggleBtn.style.background = '#ff0000';
+                } catch (err) {
+                    console.error("Webcam error:", err);
+                    alert("Gagal aktifkan kamera.");
+                }
+            }
+        });
+    }
+
+    function stopWebcam() {
+        if (webcamStream) {
+            webcamStream.getTracks().forEach(track => track.stop());
+            webcamStream = null;
+            webcamPreview.srcObject = null;
+            if(webcamContainer) webcamContainer.classList.add('hidden');
+        }
+    }
+
+    // --- Recording Logic ---
+    if(recordBtn) {
+        recordBtn.addEventListener('click', () => {
+            if (isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        });
+    }
+
+    async function startRecording() {
+        if (!karaokeVideoElement) return;
+        
+        try {
+            // 1. Get Mic Access
+            micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const micSource = audioContext.createMediaStreamSource(micStream);
+            micSource.connect(mixedOutput); // Mic to mixed output (which goes to speakers and recording destination)
+
+            // 2. Setup Canvas Stream
+            const ctx = recordingCanvas.getContext('2d');
+            isRecording = true;
+            recordBtn.textContent = '⏹ Stop Rekam';
+            recordBtn.style.background = '#000';
+
+            const drawLoop = () => {
+                if (!isRecording) return;
+                
+                // Draw Karaoke Video
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, recordingCanvas.width, recordingCanvas.height);
+                
+                // Draw Karaoke content (video)
+                if (karaokeVideoElement.readyState >= 2) {
+                    ctx.drawImage(karaokeVideoElement, 0, 0, recordingCanvas.width, recordingCanvas.height);
+                }
+
+                // Draw Webcam overlay (if active)
+                if (webcamStream && webcamPreview.readyState >= 2) {
+                    const w = 320;
+                    const h = 240;
+                    const x = recordingCanvas.width - w - 20;
+                    const y = recordingCanvas.height - h - 20;
+                    
+                    ctx.save();
+                    ctx.translate(x + w, y);
+                    ctx.scale(-1, 1); // Mirror webcam
+                    ctx.drawImage(webcamPreview, 0, 0, w, h);
+                    ctx.restore();
+                    
+                    // Add border
+                    ctx.strokeStyle = '#d63384';
+                    ctx.lineWidth = 4;
+                    ctx.strokeRect(x, y, w, h);
+                }
+
+                requestAnimationFrame(drawLoop);
+            };
+            drawLoop();
+
+            // 3. Combine Streams
+            const canvasStream = recordingCanvas.captureStream(30);
+            const combinedStream = new MediaStream([
+                ...canvasStream.getVideoTracks(),
+                ...recordingDestination.stream.getAudioTracks()
+            ]);
+
+            mediaRecorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm;codecs=vp8,opus' });
+            recordedChunks = [];
+
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) recordedChunks.push(e.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `Karaoke_${new Date().getTime()}.webm`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+            };
+
+            mediaRecorder.start();
+            console.log("Recording started...");
+
+        } catch (err) {
+            console.error("Recording error:", err);
+            alert("Gagal memulai rekaman. Pastikan izin mikrofon diberikan.");
+        }
+    }
+
+    function stopRecording() {
+        isRecording = false;
+        if (mediaRecorder) mediaRecorder.stop();
+        if (micStream) {
+            micStream.getTracks().forEach(track => track.stop());
+            micStream = null;
+        }
+        recordBtn.textContent = '🔴 Rekam';
+        recordBtn.style.background = '#ff5252';
+        console.log("Recording stopped.");
+    }
+
+
+    // PWA Service Worker Registration
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(reg => console.log('SW Registered', reg))
+                .catch(err => console.log('SW Error', err));
+        });
     }
 
 });

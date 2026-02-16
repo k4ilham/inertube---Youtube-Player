@@ -3,8 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YouTube Viewer</title>
+    <title>InerTube</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#ff0000">
+    <link rel="apple-touch-icon" href="/static/icon-192.png">
+    
     <!-- Google Fonts for premium look -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,11 +18,14 @@
 <body>
     <div class="app-container">
         <header>
-            <div class="logo">YouTube Viewer</div>
+            <div class="logo">InerTube</div>
             <div class="nav-actions">
                 <button id="homeBtn" class="nav-btn active">Beranda</button>
                 <button id="karaokeNavBtn" class="nav-btn">🎤 Karaoke</button>
                 <button id="moviesBtn" class="nav-btn">🎬 Film</button>
+                <button id="kidsBtn" class="nav-btn">👶 Anak</button>
+                <button id="musicBtn" class="nav-btn">🎵 Musik</button>
+                <button id="kailhamBtn" class="nav-btn">👤 Kailham</button>
                 <button id="historyBtn" class="nav-btn">Riwayat</button>
                 <button id="downloadsBtn" class="nav-btn">Unduhan</button>
                 <button id="playlistsBtn" class="nav-btn">Playlist</button>
@@ -31,18 +39,77 @@
         </header>
         
         <div class="app-content-wrapper">
-            <aside id="sidebar" class="sidebar hidden">
-                <h3>Genre</h3>
-                <button class="category-btn active" data-genre="All">Semua Film</button>
-                <button class="category-btn" data-genre="Action">Aksi</button>
-                <button class="category-btn" data-genre="Adventure">Petualangan</button>
-                <button class="category-btn" data-genre="Comedy">Komedi</button>
-                <button class="category-btn" data-genre="Drama">Drama</button>
-                <button class="category-btn" data-genre="Horror">Horror</button>
-                <button class="category-btn" data-genre="Sci-Fi">Fiksi Ilmiah</button>
-                <button class="category-btn" data-genre="Thriller">Thriller</button>
-                <button class="category-btn" data-genre="Documentary">Dokumenter</button>
-                <button class="category-btn" data-genre="Animation">Animasi</button>
+            <!-- Sidebar Home -->
+            <aside id="sidebar-home" class="sidebar hidden" style="background: #181818;">
+                <h3>Kategori</h3>
+                <button class="category-btn active" data-query="Trending Indonesia">Trending</button>
+                <button class="category-btn" data-query="Berita Indonesia Terbaru">Berita</button>
+                <button class="category-btn" data-query="Gaming Indonesia">Gaming</button>
+                <button class="category-btn" data-query="Olahraga Indonesia">Olahraga</button>
+                <button class="category-btn" data-query="Teknologi Gadget Indonesia">Teknologi</button>
+                <button class="category-btn" data-query="Otomotif Indonesia">Otomotif</button>
+                <button class="category-btn" data-query="Meme Indonesia Lucu">Hiburan</button>
+            </aside>
+
+            <!-- Sidebar Karaoke -->
+            <aside id="sidebar-karaoke" class="sidebar hidden" style="background: #1e1020; border-right-color: #d63384;">
+                <h3 style="color: #d63384;">Genre Karaoke</h3>
+                <button class="category-karaoke-btn active" data-query="Lagu Karaoke Populer">Populer</button>
+                <button class="category-karaoke-btn" data-query="Karaoke Pop Indonesia">Pop Indo</button>
+                <button class="category-karaoke-btn" data-query="Karaoke Dangdut Koplo">Dangdut</button>
+                <button class="category-karaoke-btn" data-query="Karaoke Rock Indonesia">Rock</button>
+                <button class="category-karaoke-btn" data-query="Karaoke Lagu Barat">Barat</button>
+                <button class="category-karaoke-btn" data-query="Karaoke Duet">Duet</button>
+                <button class="category-karaoke-btn" data-query="Karaoke Tembang Kenangan">Kenangan</button>
+            </aside>
+
+            <!-- Sidebar Films -->
+            <aside id="sidebar-movies" class="sidebar hidden">
+                <h3>Genre Film</h3>
+                <button class="category-movie-btn active" data-genre="All">Semua Film</button>
+                <button class="category-movie-btn" data-genre="Action">Aksi</button>
+                <button class="category-movie-btn" data-genre="Adventure">Petualangan</button>
+                <button class="category-movie-btn" data-genre="Comedy">Komedi</button>
+                <button class="category-movie-btn" data-genre="Drama">Drama</button>
+                <button class="category-movie-btn" data-genre="Horror">Horror</button>
+                <button class="category-movie-btn" data-genre="Sci-Fi">Fiksi Ilmiah</button>
+                <button class="category-movie-btn" data-genre="Thriller">Thriller</button>
+                <button class="category-movie-btn" data-genre="Documentary">Dokumenter</button>
+                <button class="category-movie-btn" data-genre="Animation">Animasi</button>
+            </aside>
+            
+            <!-- Sidebar Kids -->
+            <aside id="sidebar-kids" class="sidebar hidden" style="background: #2a1a1a; border-right-color: #ff5252;">
+                <h3 style="color: #ff5252;">Kategori Anak</h3>
+                <button class="category-kids-btn active" data-query="Kartun Anak">Kartun</button>
+                <button class="category-kids-btn" data-query="Lagu Anak">Lagu</button>
+                <button class="category-kids-btn" data-query="Belajar Anak">Belajar</button>
+                <button class="category-kids-btn" data-query="Dongeng Anak">Dongeng</button>
+                <button class="category-kids-btn" data-query="Gaming Anak">Gaming</button>
+                <button class="category-kids-btn" data-query="Hewan Lucu">Hewan</button>
+            </aside>
+
+            <!-- Sidebar Music -->
+            <aside id="sidebar-music" class="sidebar hidden" style="background: #101a20; border-right-color: #00bcd4;">
+                <h3 style="color: #00bcd4;">Musik Indonesia</h3>
+                <button class="category-music-btn active" data-query="Lagu Indonesia Terbaru">Terbaru</button>
+                <button class="category-music-btn" data-query="Lagu Pop Indonesia">Pop Indo</button>
+                <button class="category-music-btn" data-query="Lagu Dangdut Koplo">Dangdut</button>
+                <button class="category-music-btn" data-query="Lagu Rock Indonesia">Rock</button>
+                <button class="category-music-btn" data-query="Lagu Indie Indonesia">Indie</button>
+                <button class="category-music-btn" data-query="Lagu Galau Indonesia">Galau</button>
+                <button class="category-music-btn" data-query="Lagu Akustik Indonesia">Akustik</button>
+                <button class="category-music-btn" data-query="Tembang Kenangan Indonesia">Kenangan</button>
+                <button class="category-music-btn" data-query="Cover Lagu Indonesia">Cover</button>
+            </aside>
+
+            <!-- Sidebar Kailham -->
+            <aside id="sidebar-kailham" class="sidebar hidden" style="background: #111; border-right-color: #ffffff;">
+                <h3 style="color: #ffffff;">Kailham Maulana</h3>
+                <button class="category-kailham-btn active" data-query="Kailham Maulana">Semua Video</button>
+                <button class="category-kailham-btn" data-query="Kailham Maulana Shorts">Shorts</button>
+                <button class="category-kailham-btn" data-query="Kailham Maulana Live">Live</button>
+                <button class="category-kailham-btn" data-query="Kailham Maulana Vlog">Vlog</button>
             </aside>
 
             <main>
@@ -73,21 +140,50 @@
                     </div>
                 </div>
             </div>
-             <!-- Karaoke View -->
-             <div id="karaokeView" class="karaoke-view" style="display: none;">
-                <div class="karaoke-controls">
-                    <button class="close-karaoke" onclick="closeKaraokeMode()">&times; Close</button>
-                    <h3>Karaoke Mode</h3>
+             <!-- Karaoke Modal -->
+    <div id="karaokeModal" class="modal">
+        <div class="modal-content karaoke-modal-content">
+            <div class="modal-header">
+                <div>
+                    <button class="close-btn" id="closeKaraokeBtn">Close</button>
+                    <span style="margin-left: 10px; font-weight: bold;">Karaoke Mode</span>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                     <button id="recordBtn" class="nav-btn" style="background: #ff5252; color: white;">🔴 Rekam</button>
+                     <button id="duetToggleBtn" class="nav-btn" style="background: #d63384; color: white;">📷 Mode Duet</button>
                     <label class="switch">
                         <input type="checkbox" id="vocalRemoverToggle">
                         <span class="slider round"></span>
                     </label>
-                    <span style="font-size: 0.9rem; margin-left: 10px;">Remove Vocals (Beta)</span>
-                </div>
-                <div id="lyricsContainer" class="lyrics-container">
-                    <div class="placeholder-message">Loading Lyrics...</div>
+                    <span style="font-size: 0.9rem;">Remove Vocals (Beta)</span>
                 </div>
             </div>
+            
+            <!-- Hidden Canvas for Composite Recording -->
+            <canvas id="recordingCanvas" width="1280" height="720" style="display:none;"></canvas>
+
+            
+            <div class="karaoke-split-container">
+                <!-- Left: Video -->
+                <div class="karaoke-video-column">
+                    <div class="karaoke-video-container">
+                        <div id="karaokePlayer"></div>
+                    </div>
+                </div>
+
+                <!-- Right: Lyrics & Webcam -->
+                <div class="karaoke-lyrics-column">
+                    <div id="lyrics" class="lyrics-container">
+                        <p class="lyrics-placeholder">Lyrics will appear here...</p>
+                    </div>
+                    <!-- Webcam Preview -->
+                    <div id="webcamContainer" class="webcam-container hidden">
+                        <video id="webcamPreview" autoplay playsinline muted></video>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
         </div>
 
         <!-- Floating Player -->
@@ -123,6 +219,10 @@
             </div>
         </div>
     </div>
+
+    <footer class="app-footer">
+        <p>Created by <strong>Ilham Maulana</strong> &bull; <a href="mailto:k4ilham@gmail.com">k4ilham@gmail.com</a></p>
+    </footer>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
