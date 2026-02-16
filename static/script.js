@@ -17,7 +17,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const moviesBtn = document.getElementById('moviesBtn');
     const kidsBtn = document.getElementById('kidsBtn');
     const musicBtn = document.getElementById('musicBtn');
-    const kailhamBtn = document.getElementById('kailhamBtn');
     
     // Karaoke Mode Elements
     const karaokeModal = document.getElementById('karaokeModal');
@@ -60,7 +59,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const sidebarMovies = document.getElementById('sidebar-movies');
         const sidebarKids = document.getElementById('sidebar-kids');
         const sidebarMusic = document.getElementById('sidebar-music');
-        const sidebarKailham = document.getElementById('sidebar-kailham');
         
         // Hide all
         sidebarHome.classList.add('hidden');
@@ -68,7 +66,6 @@ document.addEventListener('DOMContentLoaded', () => {
         sidebarMovies.classList.add('hidden');
         sidebarKids.classList.add('hidden');
         sidebarMusic.classList.add('hidden');
-        if(sidebarKailham) sidebarKailham.classList.add('hidden');
 
         if (btn === homeBtn) {
             sidebarHome.classList.remove('hidden');
@@ -80,8 +77,6 @@ document.addEventListener('DOMContentLoaded', () => {
             sidebarKids.classList.remove('hidden');
         } else if (btn === musicBtn) {
             sidebarMusic.classList.remove('hidden');
-        } else if (btn === kailhamBtn) {
-            sidebarKailham.classList.remove('hidden');
         }
     }
 
@@ -168,21 +163,6 @@ document.addEventListener('DOMContentLoaded', () => {
         performSearch('Lagu Indonesia Terbaru');
     });
 
-    kailhamBtn.addEventListener('click', () => {
-        setActiveNav(kailhamBtn);
-        isKaraokeSearch = false;
-        isMovieSearch = false;
-        isKidsSearch = false;
-        isMusicSearch = false;
-        searchInput.value = '';
-        showLoading();
-        
-         // Reset category
-        document.querySelectorAll('.category-kailham-btn').forEach(b => b.classList.remove('active'));
-        document.querySelector('.category-kailham-btn[data-query="Kailham Maulana"]').classList.add('active');
-
-        performSearch('Kailham Maulana');
-    });
 
     historyBtn.addEventListener('click', () => {
         setActiveNav(historyBtn);
@@ -257,14 +237,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Kailham Sidebar
-    document.querySelectorAll('.category-kailham-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.category-kailham-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            performSearch(btn.dataset.query);
-        });
-    });
 
 
     // Search
@@ -522,15 +494,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function openVideo(video) {
+        if (!video) return;
         currentVideoId = video.id; // video is now the full object
         currentVideoObj = video; // Save for adding to playlist
         
+        console.log('Opening video:', currentVideoId);
         // Save to history
         addToHistory(video);
         
         // If in Karaoke Mode (Tab), open native player directly!
         if (isKaraokeSearch) {
-            startKaraokeMode();
+            window.open(`/karaoke/${video.id}`, '_blank');
             return;
         }
         
@@ -937,336 +911,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let channelMerger = null;
     let lyricsData = [];
 
-    // Helper to start Karaoke
-    async function startKaraokeMode() {
-        if (!currentVideoId) return;
-        
-        karaokeModal.style.display = 'block';
-        karaokeModal.classList.add('active');
-        
-        lyricsDiv.innerHTML = '<div class="placeholder-message">Loading...</div>';
-        
-        // Stop main player iframe if any
-        videoPlayer.src = '';
-        
-        try {
-            // 1. Fetch Stream
-            const response = await fetch(`/api/stream?id=${currentVideoId}`);
-            const data = await response.json();
-            
-            if (data.error) throw new Error(data.error);
-
-            // 2. Setup Native Video
-            karaokeVideoElement = document.createElement('video');
-            karaokeVideoElement.src = data.url;
-            karaokeVideoElement.style.width = '100%';
-            karaokeVideoElement.controls = true;
-            karaokeVideoElement.style.display = 'block';
-            karaokeVideoElement.crossOrigin = 'anonymous'; 
-
-            // Insert video into karaokePlayer div
-            const playerContainer = document.getElementById('karaokePlayer');
-            playerContainer.innerHTML = '';
-            playerContainer.appendChild(karaokeVideoElement);
-            
-            await karaokeVideoElement.play();
-            
-            // 3. Setup Audio Logic
-            setupAudioProcessing(karaokeVideoElement);
-            vocalRemoverToggle.checked = false; 
-            
-            // 4. Fetch Lyrics
-            fetchLyrics(currentVideoId);
-            
-            // 5. Sync Loop
-            karaokeVideoElement.addEventListener('timeupdate', syncLyrics);
-
-        } catch (err) {
-            console.error(err);
-            lyricsDiv.innerHTML = `<div class="placeholder-message">Error: ${err.message}. <br> Try reloading or use Popup Player.</div>`;
-        }
-    }
-
-    if(karaokeBtn) karaokeBtn.addEventListener('click', startKaraokeMode);
-
-    let recordingDestination = null;
-    let mixedOutput = null;
-
-    function setupAudioProcessing(videoEl) {
-        try {
-            if (audioContext) audioContext.close();
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            
-            try {
-                audioSource = audioContext.createMediaElementSource(videoEl);
-            } catch (mediaElemErr) {
-                console.warn("Karaoke Web Audio error: " + mediaElemErr);
-                vocalRemoverToggle.disabled = true;
-                return;
-            }
-            
-            channelSplitter = audioContext.createChannelSplitter(2);
-            channelMerger = audioContext.createChannelMerger(2);
-            
-            // Mixed Output Gain
-            mixedOutput = audioContext.createGain();
-            mixedOutput.connect(audioContext.destination);
-
-            recordingDestination = audioContext.createMediaStreamDestination();
-            mixedOutput.connect(recordingDestination);
-            
-            audioSource.connect(mixedOutput);
-            
-            vocalRemoverToggle.disabled = false;
-            vocalRemoverToggle.onchange = () => {
-                audioSource.disconnect();
-                if (vocalRemoverToggle.checked) {
-                    audioSource.connect(channelSplitter);
-                    const inverter = audioContext.createGain();
-                    inverter.gain.value = -1;
-                    channelSplitter.connect(channelMerger, 0, 0); 
-                    channelSplitter.connect(channelMerger, 0, 1); 
-                    channelSplitter.connect(inverter, 1);
-                    inverter.connect(channelMerger, 0, 0);
-                    inverter.connect(channelMerger, 0, 1);
-                    channelMerger.connect(mixedOutput);
-                } else {
-                    audioSource.connect(mixedOutput);
-                }
-            };
-        } catch (e) {
-            console.warn("Web Audio API initialization error:", e);
-        }
-    }
-
-    async function fetchLyrics(id) {
-        lyricsDiv.innerHTML = '<div class="placeholder-message">Loading lyrics...</div>';
-        try {
-            const res = await fetch(`/api/lyrics?id=${id}`);
-            const data = await res.json();
-            
-            if (data.error) {
-                lyricsDiv.innerHTML = '<div class="placeholder-message">No lyrics found for this video.</div>';
-                return;
-            }
-            renderLyrics(data);
-        } catch (e) {
-            lyricsDiv.innerHTML = '<div class="placeholder-message">Failed to load lyrics.</div>';
-        }
-    }
-
-    function renderLyrics(data) {
-        lyricsData = data; 
-        lyricsDiv.innerHTML = '';
-        data.forEach((line, index) => {
-            const el = document.createElement('div');
-            el.className = 'lyric-line';
-            el.dataset.index = index;
-            el.dataset.start = line.start;
-            el.textContent = line.text;
-            
-            el.onclick = () => {
-                if (karaokeVideoElement) karaokeVideoElement.currentTime = line.start;
-            };
-            lyricsDiv.appendChild(el);
-        });
-    }
-
-    function syncLyrics() {
-        if (!karaokeVideoElement || !lyricsData.length) return;
-        const time = karaokeVideoElement.currentTime;
-        const activeIdx = lyricsData.findIndex((line, i) => {
-            const next = lyricsData[i+1];
-            if (next) return time >= line.start && time < next.start;
-            return time >= line.start;
-        });
-        
-        if (activeIdx !== -1) {
-            const currentActive = lyricsDiv.querySelector('.active');
-            if (currentActive) currentActive.classList.remove('active');
-            const newActive = lyricsDiv.children[activeIdx];
-            if (newActive) {
-                newActive.classList.add('active');
-                newActive.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        }
-    }
-
-    // Modal Close logic for Karaoke
-    if(closeKaraokeBtn) {
-        closeKaraokeBtn.addEventListener('click', () => {
-            stopKaraoke();
-        });
-    }
-
-    function stopKaraoke() {
-        if (isRecording) stopRecording();
-        karaokeModal.style.display = 'none';
-        karaokeModal.classList.remove('active');
-        if (karaokeVideoElement) {
-            karaokeVideoElement.pause();
-            karaokeVideoElement.src = '';
-            karaokeVideoElement = null;
-        }
-        if (audioContext) {
-            audioContext.close();
-            audioContext = null;
-        }
-        stopWebcam();
-        if(duetToggleBtn) {
-            duetToggleBtn.textContent = '📷 Mode Duet';
-            duetToggleBtn.style.background = '#d63384';
-        }
-    }
-
-    // Duet / Webcam Logic
-    if(duetToggleBtn) {
-        duetToggleBtn.addEventListener('click', async () => {
-            if (webcamStream) {
-                stopWebcam();
-                duetToggleBtn.textContent = '📷 Mode Duet';
-                duetToggleBtn.style.background = '#d63384';
-            } else {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                    webcamStream = stream;
-                    webcamPreview.srcObject = stream;
-                    webcamContainer.classList.remove('hidden');
-                    duetToggleBtn.textContent = '⏹ Stop Kamera';
-                    duetToggleBtn.style.background = '#ff0000';
-                } catch (err) {
-                    console.error("Webcam error:", err);
-                    alert("Gagal aktifkan kamera.");
-                }
-            }
-        });
-    }
-
-    function stopWebcam() {
-        if (webcamStream) {
-            webcamStream.getTracks().forEach(track => track.stop());
-            webcamStream = null;
-            webcamPreview.srcObject = null;
-            if(webcamContainer) webcamContainer.classList.add('hidden');
-        }
-    }
-
     // --- Recording Logic ---
-    if(recordBtn) {
-        recordBtn.addEventListener('click', () => {
-            if (isRecording) {
-                stopRecording();
-            } else {
-                startRecording();
-            }
-        });
-    }
-
-    async function startRecording() {
-        if (!karaokeVideoElement) return;
-        
-        try {
-            // 1. Get Mic Access
-            micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const micSource = audioContext.createMediaStreamSource(micStream);
-            micSource.connect(mixedOutput); // Mic to mixed output (which goes to speakers and recording destination)
-
-            // 2. Setup Canvas Stream
-            const ctx = recordingCanvas.getContext('2d');
-            isRecording = true;
-            recordBtn.textContent = '⏹ Stop Rekam';
-            recordBtn.style.background = '#000';
-
-            const drawLoop = () => {
-                if (!isRecording) return;
-                
-                // Draw Karaoke Video
-                ctx.fillStyle = '#000';
-                ctx.fillRect(0, 0, recordingCanvas.width, recordingCanvas.height);
-                
-                // Draw Karaoke content (video)
-                if (karaokeVideoElement.readyState >= 2) {
-                    ctx.drawImage(karaokeVideoElement, 0, 0, recordingCanvas.width, recordingCanvas.height);
-                }
-
-                // Draw Webcam overlay (if active)
-                if (webcamStream && webcamPreview.readyState >= 2) {
-                    const w = 320;
-                    const h = 240;
-                    const x = recordingCanvas.width - w - 20;
-                    const y = recordingCanvas.height - h - 20;
-                    
-                    ctx.save();
-                    ctx.translate(x + w, y);
-                    ctx.scale(-1, 1); // Mirror webcam
-                    ctx.drawImage(webcamPreview, 0, 0, w, h);
-                    ctx.restore();
-                    
-                    // Add border
-                    ctx.strokeStyle = '#d63384';
-                    ctx.lineWidth = 4;
-                    ctx.strokeRect(x, y, w, h);
-                }
-
-                requestAnimationFrame(drawLoop);
-            };
-            drawLoop();
-
-            // 3. Combine Streams
-            const canvasStream = recordingCanvas.captureStream(30);
-            const combinedStream = new MediaStream([
-                ...canvasStream.getVideoTracks(),
-                ...recordingDestination.stream.getAudioTracks()
-            ]);
-
-            mediaRecorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm;codecs=vp8,opus' });
-            recordedChunks = [];
-
-            mediaRecorder.ondataavailable = (e) => {
-                if (e.data.size > 0) recordedChunks.push(e.data);
-            };
-
-            mediaRecorder.onstop = () => {
-                const blob = new Blob(recordedChunks, { type: 'video/webm' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
-                a.download = `Karaoke_${new Date().getTime()}.webm`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-            };
-
-            mediaRecorder.start();
-            console.log("Recording started...");
-
-        } catch (err) {
-            console.error("Recording error:", err);
-            alert("Gagal memulai rekaman. Pastikan izin mikrofon diberikan.");
-        }
-    }
-
-    function stopRecording() {
-        isRecording = false;
-        if (mediaRecorder) mediaRecorder.stop();
-        if (micStream) {
-            micStream.getTracks().forEach(track => track.stop());
-            micStream = null;
-        }
-        recordBtn.textContent = '🔴 Rekam';
-        recordBtn.style.background = '#ff5252';
-        console.log("Recording stopped.");
-    }
+    // (Moved to karaoke.js)
 
 
-    // PWA Service Worker Registration
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/service-worker.js')
-                .then(reg => console.log('SW Registered', reg))
-                .catch(err => console.log('SW Error', err));
-        });
-    }
-
+    // PWA Service Worker Registration removed
 });

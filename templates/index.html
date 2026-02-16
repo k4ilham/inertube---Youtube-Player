@@ -6,7 +6,7 @@
     <title>InerTube</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <!-- PWA -->
-    <link rel="manifest" href="/manifest.json">
+    
     <meta name="theme-color" content="#ff0000">
     <link rel="apple-touch-icon" href="/static/icon-192.png">
     
@@ -25,7 +25,6 @@
                 <button id="moviesBtn" class="nav-btn">🎬 Film</button>
                 <button id="kidsBtn" class="nav-btn">👶 Anak</button>
                 <button id="musicBtn" class="nav-btn">🎵 Musik</button>
-                <button id="kailhamBtn" class="nav-btn">👤 Kailham</button>
                 <button id="historyBtn" class="nav-btn">Riwayat</button>
                 <button id="downloadsBtn" class="nav-btn">Unduhan</button>
                 <button id="playlistsBtn" class="nav-btn">Playlist</button>
@@ -103,13 +102,6 @@
                 <button class="category-music-btn" data-query="Cover Lagu Indonesia">Cover</button>
             </aside>
 
-            <!-- Sidebar Kailham -->
-            <aside id="sidebar-kailham" class="sidebar hidden" style="background: #111; border-right-color: #ffffff;">
-                <h3 style="color: #ffffff;">Kailham Maulana</h3>
-                <button class="category-kailham-btn active" data-query="Kailham Maulana">Semua Video</button>
-                <button class="category-kailham-btn" data-query="Kailham Maulana Shorts">Shorts</button>
-                <button class="category-kailham-btn" data-query="Kailham Maulana Live">Live</button>
-                <button class="category-kailham-btn" data-query="Kailham Maulana Vlog">Vlog</button>
             </aside>
 
             <main>
@@ -140,50 +132,6 @@
                     </div>
                 </div>
             </div>
-             <!-- Karaoke Modal -->
-    <div id="karaokeModal" class="modal">
-        <div class="modal-content karaoke-modal-content">
-            <div class="modal-header">
-                <div>
-                    <button class="close-btn" id="closeKaraokeBtn">Close</button>
-                    <span style="margin-left: 10px; font-weight: bold;">Karaoke Mode</span>
-                </div>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                     <button id="recordBtn" class="nav-btn" style="background: #ff5252; color: white;">🔴 Rekam</button>
-                     <button id="duetToggleBtn" class="nav-btn" style="background: #d63384; color: white;">📷 Mode Duet</button>
-                    <label class="switch">
-                        <input type="checkbox" id="vocalRemoverToggle">
-                        <span class="slider round"></span>
-                    </label>
-                    <span style="font-size: 0.9rem;">Remove Vocals (Beta)</span>
-                </div>
-            </div>
-            
-            <!-- Hidden Canvas for Composite Recording -->
-            <canvas id="recordingCanvas" width="1280" height="720" style="display:none;"></canvas>
-
-            
-            <div class="karaoke-split-container">
-                <!-- Left: Video -->
-                <div class="karaoke-video-column">
-                    <div class="karaoke-video-container">
-                        <div id="karaokePlayer"></div>
-                    </div>
-                </div>
-
-                <!-- Right: Lyrics & Webcam -->
-                <div class="karaoke-lyrics-column">
-                    <div id="lyrics" class="lyrics-container">
-                        <p class="lyrics-placeholder">Lyrics will appear here...</p>
-                    </div>
-                    <!-- Webcam Preview -->
-                    <div id="webcamContainer" class="webcam-container hidden">
-                        <video id="webcamPreview" autoplay playsinline muted></video>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
         </div>
 
         <!-- Floating Player -->

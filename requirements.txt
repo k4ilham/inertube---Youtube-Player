@@ -3,3 +3,4 @@ pywebview
 youtube-search-python
 yt-dlp
 youtube-transcript-api
+requests

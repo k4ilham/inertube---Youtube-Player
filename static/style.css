@@ -722,63 +722,104 @@ main {
     height: 100%;
 }
 
-.karaoke-view {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 90%;
-    height: 90%;
-    background: rgba(0, 0, 0, 0.95);
-    z-index: 3000;
-    border-radius: 12px;
+/* Karaoke View Layout Enhancement */
+.karaoke-modal-content {
+    height: 90vh;
     display: flex;
     flex-direction: column;
-    padding: 20px;
-    backdrop-filter: blur(10px);
 }
 
-.karaoke-controls {
+.karaoke-split-container {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    gap: 20px;
+    padding: 20px;
+    height: calc(100% - 70px);
+}
+
+.karaoke-video-column {
+    flex: 1.5;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.karaoke-lyrics-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: rgba(40, 40, 40, 0.4);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.karaoke-video-container {
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
-    padding-bottom: 20px;
-    border-bottom: 1px solid #333;
-    color: white;
+    justify-content: center;
 }
 
-.close-karaoke {
-    background: #333;
-    border: none;
-    color: white;
-    padding: 8px 16px;
-    border-radius: 20px;
-    margin-right: 20px;
-    cursor: pointer;
+#karaokePlayer {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#karaokePlayer video {
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    object-fit: contain;
 }
 
 .lyrics-container {
-    flex-grow: 1;
+    flex: 1;
     overflow-y: auto;
-    padding: 40px 0;
+    padding: 20px;
     text-align: center;
-    font-size: 1.5rem;
-    color: #888;
+    font-size: 1.4rem;
+    color: #eee;
+    scroll-behavior: smooth;
+}
+
+.webcam-container {
+    height: 150px;
+    background: #000;
+    border-top: 1px solid #444;
+}
+
+.webcam-container video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.webcam-container.hidden {
+    display: none;
 }
 
 .lyric-line {
-    padding: 10px 0;
-    transition: all 0.3s;
-    cursor: pointer;
+    padding: 10px;
+    opacity: 0.5;
+    transition: all 0.3s ease;
 }
 
 .lyric-line.active {
+    opacity: 1;
     color: #ff00cc;
     font-weight: bold;
     transform: scale(1.1);
-    text-shadow: 0 0 10px rgba(255, 0, 204, 0.5);
 }
 
-/* Switch */
 .switch {
     position: relative;
     display: inline-block;

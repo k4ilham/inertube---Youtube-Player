@@ -16,13 +16,9 @@ CURRENT_QUERY = None
 def index():
     return render_template('index.html')
 
-@app.route('/manifest.json')
-def manifest():
-    return app.send_static_file('../manifest.json')
-
-@app.route('/service-worker.js')
-def service_worker():
-    return app.send_static_file('../service-worker.js')
+@app.route('/karaoke/<video_id>')
+def karaoke_page(video_id):
+    return render_template('karaoke.html', video_id=video_id)
 
 @app.route('/api/search')
 def search():
@@ -145,6 +141,36 @@ def load_history_data():
     except:
         return []
 
+@app.route('/api/proxy')
+def proxy_stream():
+    url = request.args.get('url')
+    if not url:
+        return "No URL", 400
+    
+    import requests
+    headers = {k: v for k, v in request.headers.items() if k.lower() in ['range', 'user-agent']}
+    
+    r = requests.get(url, stream=True, headers=headers)
+    print(f"Proxying: {r.headers.get('Content-Type')} - Status: {r.status_code}")
+    
+    from flask import Response
+    
+    def generate():
+        for chunk in r.iter_content(chunk_size=128*1024):
+            yield chunk
+
+    response_headers = {
+        'Content-Type': r.headers.get('Content-Type'),
+        'Content-Range': r.headers.get('Content-Range'),
+        'Accept-Ranges': r.headers.get('Accept-Ranges'),
+        'Content-Length': r.headers.get('Content-Length'),
+        'Access-Control-Allow-Origin': '*'
+    }
+    # Clean up None values
+    response_headers = {k: v for k, v in response_headers.items() if v is not None}
+    
+    return Response(generate(), status=r.status_code, headers=response_headers)
+
 def save_history_data(data):
     with open(HISTORY_FILE, 'w') as f:
         json.dump(data, f, indent=2)
@@ -210,10 +236,10 @@ def lyrics():
         except:
             try:
                 # Fallback to generated
-                transcript = transcript_list.find_generated_transcript(['en', 'id'])
+                transcript = transcript_list.find_generated_transcript(['en', 'id', 'id-ID'])
             except:
-                 # Fallback to ANY
-                 transcript = transcript_list[0]
+                # Fallback to ANY
+                transcript = list(transcript_list)[0]
         
         return jsonify(transcript.fetch())
     except Exception as e:
@@ -224,6 +250,7 @@ def lyrics():
              t = YouTubeTranscriptApi.get_transcript(video_id)
              return jsonify(t)
         except Exception as e2:
+             # Return error with 200 to avoid console noise, or keep 404 but clean msg
              return jsonify({'error': 'No lyrics found.'}), 404
 
 @app.route('/api/playlists', methods=['GET', 'POST'])
