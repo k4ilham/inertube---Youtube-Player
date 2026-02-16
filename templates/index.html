@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Viewer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Google Fonts for premium look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div class="logo">YouTube Viewer</div>
+            <div class="nav-actions">
+                <button id="homeBtn" class="nav-btn">Home</button>
+                <button id="historyBtn" class="nav-btn">History</button>
+                <button id="downloadsBtn" class="nav-btn">Downloads</button>
+                <button id="playlistsBtn" class="nav-btn">Playlists</button>
+            </div>
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Search for videos...">
+                <button id="searchBtn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </button>
+            </div>
+        </header>
+        
+        <main>
+            <div id="resultsGrid" class="results-grid">
+                <!-- Results will be populated here -->
+                <div class="placeholder-message">
+                    Search for something to start watching.
+                </div>
+            </div>
+        </main>
+
+        <div id="videoModal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <div class="video-wrapper">
+                    <iframe id="videoPlayer" src="" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+                <div class="video-info">
+                    <h2 id="modalTitle"></h2>
+                    <div class="download-actions">
+                        <button id="downloadMp4Btn" class="download-btn">Download MP4</button>
+                        <button id="downloadMp3Btn" class="download-btn">Download MP3</button>
+                        <button id="addToPlaylistBtn" class="download-btn secondary">Add to Playlist</button>
+                        <button id="popupPlayerBtn" class="download-btn secondary">Popup Player</button>
+                        <div id="downloadStatus" class="download-status"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Floating Player -->
+        <div id="floatingPlayer" class="floating-player">
+            <div id="dragHandle" class="drag-handle">
+                <span style="font-size: 12px; font-weight: bold; margin-left: 10px;">Mini Player</span>
+                <span id="closeFloating" class="close-floating">&times;</span>
+            </div>
+            <div class="floating-video-container">
+                <iframe id="floatingVideoFrame" src="" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+        </div>
+
+        <!-- Create Playlist Modal -->
+        <div id="createPlaylistModal" class="modal">
+            <div class="modal-content small-modal">
+                <span class="close-create-playlist">&times;</span>
+                <h2>Create New Playlist</h2>
+                <input type="text" id="newPlaylistName" placeholder="Playlist Name" class="modal-input" style="width: 100%; padding: 10px; margin: 10px 0; background: #333; border: 1px solid #444; color: white; border-radius: 5px;">
+                <button id="confirmCreatePlaylistBtn" class="download-btn" style="width: 100%;">Create</button>
+            </div>
+        </div>
+    
+        <!-- Add to Playlist Modal -->
+        <div id="addToPlaylistModal" class="modal">
+            <div class="modal-content small-modal">
+                <span class="close-add-playlist">&times;</span>
+                <h2>Add to Playlist</h2>
+                <div id="playlistList" class="playlist-list" style="max-height: 200px; overflow-y: auto; margin: 10px 0;">
+                    <!-- Playlists will be injected here -->
+                </div>
+                <button id="openCreatePlaylistBtn" class="download-btn secondary" style="width: 100%;">Create New Playlist</button>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
