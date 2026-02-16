@@ -168,31 +168,63 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Cinema Mode Logic
     const cinemaModeBtn = document.getElementById('cinemaModeBtn');
-    const videoColumn = document.querySelector('.video-column');
-    const sidebarColumn = document.querySelector('.sidebar-column');
+    const exitCinemaBtn = document.getElementById('exitCinemaBtn');
+    const cinemaOverlay = document.getElementById('cinemaOverlay');
 
-    cinemaModeBtn.addEventListener('click', () => {
-        videoColumn.classList.toggle('cinema');
-        sidebarColumn.classList.toggle('hidden');
+    if (cinemaModeBtn) {
+        cinemaModeBtn.addEventListener('click', () => {
+            // Start curtain animation
+            cinemaOverlay.style.display = 'flex';
 
-        if (videoColumn.classList.contains('cinema')) {
-            cinemaModeBtn.textContent = '📺 Normal Mode';
-            cinemaModeBtn.style.background = '#444';
-        } else {
-            cinemaModeBtn.textContent = '🎬 Cinema Mode';
-            cinemaModeBtn.style.background = '#2a2a2a';
-        }
-    });
+            setTimeout(() => {
+                document.body.classList.add('cinema-mode');
+                exitCinemaBtn.style.display = 'block';
 
-    // Toggle Karaoke Tools
+                // Hide karaoke tools if open
+                if (karaokeSidebar && !karaokeSidebar.classList.contains('hidden')) {
+                    karaokeSidebar.classList.add('hidden');
+                }
+            }, 100);
+
+            // Hide overlay after animation
+            setTimeout(() => {
+                cinemaOverlay.style.display = 'none';
+            }, 2000);
+        });
+    }
+
+    if (exitCinemaBtn) {
+        exitCinemaBtn.addEventListener('click', () => {
+            cinemaOverlay.style.display = 'flex';
+            document.body.classList.remove('cinema-mode');
+            exitCinemaBtn.style.display = 'none';
+
+            setTimeout(() => {
+                cinemaOverlay.style.display = 'none';
+            }, 1500);
+        });
+    }
+
+    // Toggle Left Sidebar (Tools/Webcam)
+    const toggleLeftSidebarBtn = document.getElementById('toggleLeftSidebarBtn');
     const toggleKaraokeTools = document.getElementById('toggleKaraokeTools');
     const karaokeSidebar = document.getElementById('karaokeSidebar');
 
-    toggleKaraokeTools.addEventListener('click', () => {
+    const updateLeftSidebarUI = () => {
+        const isHidden = karaokeSidebar.classList.contains('hidden');
+        if (toggleLeftSidebarBtn) {
+            toggleLeftSidebarBtn.textContent = isHidden ? '⬅️ Buka Sidebar Kiri' : '⬅️ Tutup Sidebar Kiri';
+            toggleLeftSidebarBtn.style.color = isHidden ? '#888' : 'var(--text-primary)';
+        }
+        if (toggleKaraokeTools) {
+            toggleKaraokeTools.textContent = isHidden ? '🎤 Mode Karaoke' : '❌ Tutup Karaoke';
+            toggleKaraokeTools.style.background = isHidden ? 'linear-gradient(45deg, #ff00cc, #333399)' : '#333';
+        }
+    };
+
+    const toggleLeftSidebar = () => {
         karaokeSidebar.classList.toggle('hidden');
         if (!karaokeSidebar.classList.contains('hidden')) {
-            toggleKaraokeTools.textContent = '❌ Tutup Karaoke';
-            toggleKaraokeTools.style.background = '#333';
             // Enable Web Audio only when needed
             if (karaokeVideoElement) {
                 if (!audioContext) {
@@ -203,11 +235,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         } else {
-            toggleKaraokeTools.textContent = '🎤 Mode Karaoke';
-            toggleKaraokeTools.style.background = 'linear-gradient(45deg, #ff00cc, #333399)';
             stopWebcam();
         }
-    });
+        updateLeftSidebarUI();
+    };
+
+    if (toggleLeftSidebarBtn) toggleLeftSidebarBtn.addEventListener('click', toggleLeftSidebar);
+    if (toggleKaraokeTools) toggleKaraokeTools.addEventListener('click', toggleLeftSidebar);
+
+    // Toggle Right Sidebar (Related Videos)
+    const toggleRightSidebarBtn = document.getElementById('toggleRightSidebarBtn');
+    const sidebarColumn = document.querySelector('.sidebar-column');
+
+    if (toggleRightSidebarBtn && sidebarColumn) {
+        toggleRightSidebarBtn.addEventListener('click', () => {
+            sidebarColumn.classList.toggle('hidden');
+            const isHidden = sidebarColumn.classList.contains('hidden');
+            toggleRightSidebarBtn.textContent = isHidden ? '➡️ Buka Sidebar Kanan' : '➡️ Tutup Sidebar Kanan';
+            toggleRightSidebarBtn.style.color = isHidden ? '#888' : 'var(--text-primary)';
+        });
+    }
+
+    // Toggle Karaoke Tools (Legacy Button Handled Above)
 
     // Other Buttons Stubs
     document.getElementById('likeBtn').addEventListener('click', () => alert('Disukai!'));
